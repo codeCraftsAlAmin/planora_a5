@@ -1,0 +1,81 @@
+model User {
+    id            String     @id
+    name          String
+    email         String
+    emailVerified Boolean    @default(false)
+    image         String?
+    address       String?
+    phone         String?
+    bio           String?
+    gender        Gender?    @default(OTHER)
+    role          Role       @default(USER)
+    status        UserStatus @default(ACTIVE)
+    isDeleted     Boolean    @default(false)
+    deletedAt     DateTime?
+    createdAt     DateTime   @default(now())
+    updatedAt     DateTime   @updatedAt
+
+    // relations
+    sessions            Session[]
+    accounts            Account[]
+    notifications       Notification[]
+    reviews             Reviews[]
+    payments            Payments[]
+    invitationsSent     Invitations[]         @relation("inviter")
+    invitationsRecieved Invitations[]         @relation("invitee")
+    eventsRegistrations EventsRegistrations[]
+    events              Events[]
+
+    @@unique([email])
+    @@index([email], map: "idx_users_email")
+    @@index([id], map: "idx_users_id")
+    @@map("users")
+}
+
+model Session {
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([token])
+    @@index([userId])
+    @@map("session")
+}
+
+model Account {
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@index([userId])
+    @@map("account")
+}
+
+model Verification {
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    @@index([identifier])
+    @@map("verification")
+}

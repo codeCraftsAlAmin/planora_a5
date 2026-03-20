@@ -1,0 +1,27 @@
+model Events {
+    id String @id @default(uuid())
+
+    title       String
+    date        DateTime
+    time        String
+    venue       String
+    isFeatured  Boolean   @default(false)
+    type        EventType
+    description String?
+    fee         Float?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    // relations
+    organizerId         String
+    reviews             Reviews[]
+    payments            Payments[]
+    invitations         Invitations[]
+    eventsRegistrations EventsRegistrations[]
+    organizer           User                  @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+    @@index([date], map: "idx_events_date")
+    @@index([time], map: "idx_events_time")
+    @@index([type], map: "idx_events_type")
+    @@map("events")
+}

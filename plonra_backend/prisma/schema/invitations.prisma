@@ -1,0 +1,21 @@
+model Invitations {
+    id String @id @default(uuid())
+
+    status InvitationStatus
+
+    // realtions
+    eventId   String
+    inviterId String
+    inviteeId String
+    event     Events @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    inviter   User   @relation("inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+    invitee   User   @relation("invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([eventId], map: "idx_invitations_event_id")
+    @@index([inviterId], map: "idx_invitations_inviter_id")
+    @@index([inviteeId], map: "idx_invitations_invitee_id")
+    @@map("invitations")
+}

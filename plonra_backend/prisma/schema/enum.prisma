@@ -1,0 +1,53 @@
+enum EventType {
+    PUBLIC
+    PRIVATE
+}
+
+enum RegistrationStatus {
+    PROCESSING
+    APPROVED
+    REJECTED
+    BANNED
+}
+
+enum PaymentStatus {
+    PAID
+    UNPAID
+}
+
+enum InvitationStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+}
+
+enum NotificationType {
+    PAYMENT_SUCCESS
+    PAYMENT_FAILED
+    JOIN_REQUEST
+    REQUEST_APPROVED
+    REQUEST_REJECTED
+    INVITATION_RECEIVED
+    REVIEW_POSTED
+    EVENT_UPDATED
+    EVENT_CANCELLED
+    BANNED_FROM_EVENT
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+}
+
+enum Role {
+    USER
+    HOST
+    ADMIN
+}
+
+enum UserStatus {
+    ACTIVE
+    INACTIVE
+    BANNED
+}

@@ -1,0 +1,21 @@
+model EventsRegistrations {
+    id String @id @default(uuid())
+
+    status        RegistrationStatus @default(PROCESSING)
+    paymentStatus PaymentStatus      @default(UNPAID)
+
+    // relations
+    eventId String
+    userId  String
+
+    user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    event Events @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([eventId, userId])
+    @@index([eventId], map: "idx_events_registrations_event_id")
+    @@index([userId], map: "idx_events_registrations_user_id")
+    @@map("events_registrations")
+}

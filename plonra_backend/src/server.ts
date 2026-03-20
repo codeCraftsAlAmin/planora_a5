@@ -1,7 +1,8 @@
 import { Server } from "http";
 import app from "./app";
+import { envVars } from "./app/config/env";
 
-const port = process.env.PORT || 3000;
+const port = envVars.PORT;
 
 let server: Server;
 
@@ -12,7 +13,7 @@ const bootsTrap = async () => {
     });
   } catch (error) {
     console.log("Failed to start server ~ ❌", error);
-    process.exit(1);
+    process.exit(error ? 1 : 0);
   }
 };
 
