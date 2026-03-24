@@ -8,6 +8,7 @@ model Events {
     isFeatured  Boolean   @default(false)
     type        EventType
     description String?
+    image       String?
     fee         Float?
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
