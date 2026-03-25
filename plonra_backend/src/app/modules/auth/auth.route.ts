@@ -44,11 +44,4 @@ router.post(
   authController.resetPasswordController,
 );
 
-// get my profile route
-router.get(
-  "/my-profile",
-  checkAuth(Role.USER, Role.HOST, Role.ADMIN),
-  authController.getMyProfileController,
-);
-
 export const authRouter: Router = router;

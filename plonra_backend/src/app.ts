@@ -5,6 +5,7 @@ import { routeError } from "./app/middleware/routeError";
 import cors from "cors";
 import { envVars } from "./app/config/env";
 import cookieParser from "cookie-parser";
+import { userRouter } from "./app/modules/users/user.route";
 
 const app: Application = express();
 
@@ -30,6 +31,9 @@ app.use(
 
 // auth router
 app.use("/api/v1/auth", authRouter);
+
+// user router
+app.use("/api/v1/users", userRouter);
 
 // base route
 app.get("/", (req: Request, res: Response) => {

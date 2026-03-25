@@ -17,6 +17,9 @@ interface envConfig {
   SMTP_USER: string;
   SMTP_PASS: string;
   SMTP_EMAIL_SENDER: string;
+  CLOUDINARY_SEC: string;
+  CLOUDINARY_KEY_NAME: string;
+  CLOUDINARY_API_KEY: string;
 }
 
 const envVariables = (): envConfig => {
@@ -36,6 +39,9 @@ const envVariables = (): envConfig => {
     "SMTP_USER",
     "SMTP_PASS",
     "SMTP_EMAIL_SENDER",
+    "CLOUDINARY_SEC",
+    "CLOUDINARY_KEY_NAME",
+    "CLOUDINARY_API_KEY",
   ];
 
   requiredVariables.forEach((v) => {
@@ -60,6 +66,9 @@ const envVariables = (): envConfig => {
     SMTP_USER: process.env.SMTP_USER as string,
     SMTP_PASS: process.env.SMTP_PASS as string,
     SMTP_EMAIL_SENDER: process.env.SMTP_EMAIL_SENDER as string,
+    CLOUDINARY_SEC: process.env.CLOUDINARY_SEC as string,
+    CLOUDINARY_KEY_NAME: process.env.CLOUDINARY_KEY_NAME as string,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
   };
 };
 

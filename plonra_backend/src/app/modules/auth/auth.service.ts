@@ -359,25 +359,6 @@ const resetPasswordService = async (payload: IResetPassword) => {
   return result;
 };
 
-const getMyProfileService = async (user: IRequestUserInterface) => {
-  const userData = await prisma.user.findUnique({
-    where: {
-      id: user.userId,
-    },
-    include: {
-      events: true,
-      invitationsSent: true,
-      invitationsRecieved: true,
-    },
-  });
-
-  if (!userData) {
-    throw new AppError(status.UNAUTHORIZED, "User not found");
-  }
-
-  return userData;
-};
-
 export const authService = {
   signUpService,
   signInService,
@@ -387,5 +368,4 @@ export const authService = {
   verifyEmailService,
   forgetPasswordRequestService,
   resetPasswordService,
-  getMyProfileService,
 };

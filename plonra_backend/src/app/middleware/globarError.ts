@@ -5,8 +5,9 @@ import { TErrorResponse, TErrorSources } from "./error.interface";
 import z from "zod";
 import { handleZodError } from "./handleZodError";
 import AppError from "./appError";
+import { deleteUploadedFileFromGlobalErrHand } from "../utils/deleteUploadedFileFromGlobErrHand";
 
-const globalErrorHandler = (
+const globalErrorHandler = async (
   err: any,
   req: Request,
   res: Response,
@@ -15,6 +16,9 @@ const globalErrorHandler = (
   if (envVars.NODE_ENV === "development") {
     console.error("Global Error:", err);
   }
+
+  // delete uploaded files if error
+  await deleteUploadedFileFromGlobalErrHand(req);
 
   let errSources: TErrorSources[] = [];
   let statusCode: number = status.INTERNAL_SERVER_ERROR;
