@@ -37,4 +37,4 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const parser = multer({ storage: storage });
+export const multerUpload = multer({ storage: storage });

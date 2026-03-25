@@ -18,4 +18,39 @@ const getMyProfileController = catchAsync(
   },
 );
 
-export const userController = { getMyProfileController };
+const updateMyProfileController = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user;
+    const payload = {
+      ...req.body,
+      image: req.file?.path,
+    };
+    const result = await userService.updateMyProfileService(user!, payload);
+
+    sendResponse(res, {
+      ok: true,
+      statusCode: status.OK,
+      message: "My profile updated successfully",
+      data: result,
+    });
+  },
+);
+
+const updateRoleController = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const { id, role } = req.body;
+  const result = await userService.updateRoleService(user!, role, id);
+
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "Role updated successfully",
+    data: result,
+  });
+});
+
+export const userController = {
+  getMyProfileController,
+  updateMyProfileController,
+  updateRoleController,
+};

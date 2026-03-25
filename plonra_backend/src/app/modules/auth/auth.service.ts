@@ -91,10 +91,10 @@ const signInService = async (payload: ISignInEmail) => {
     throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to sign in");
   }
 
-  if (result.user.status === UserStatus.BANNED) {
+  if (result.user.status === UserStatus.BANNED || result.user.isDeleted) {
     throw new AppError(
       status.FORBIDDEN,
-      "Your account has been banned. Please contact support for assistance.",
+      "Your account has been banned or deleted. Please contact support for assistance.",
     );
   }
 
@@ -282,15 +282,11 @@ const forgetPasswordRequestService = async (payload: { email: string }) => {
     throw new AppError(status.UNAUTHORIZED, "User not found");
   }
 
-  if (user.status === UserStatus.BANNED) {
+  if (user.status === UserStatus.BANNED || user.isDeleted) {
     throw new AppError(
       status.FORBIDDEN,
-      "Your account has been banned. Please contact support for assistance.",
+      "Your account has been banned or deleted. Please contact support for assistance.",
     );
-  }
-
-  if (user.isDeleted) {
-    throw new AppError(status.UNAUTHORIZED, "User not found");
   }
 
   const data = await auth.api.requestPasswordResetEmailOTP({
@@ -316,15 +312,11 @@ const resetPasswordService = async (payload: IResetPassword) => {
     throw new AppError(status.UNAUTHORIZED, "User not found");
   }
 
-  if (user.status === UserStatus.BANNED) {
+  if (user.status === UserStatus.BANNED || user.isDeleted) {
     throw new AppError(
       status.FORBIDDEN,
-      "Your account has been banned. Please contact support for assistance.",
+      "Your account has been banned or deleted. Please contact support for assistance.",
     );
-  }
-
-  if (user.isDeleted) {
-    throw new AppError(status.UNAUTHORIZED, "User not found");
   }
 
   // verify the otp
