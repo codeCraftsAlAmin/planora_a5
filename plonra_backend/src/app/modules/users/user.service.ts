@@ -1,7 +1,7 @@
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import AppError from "../../middleware/appError";
-import { IRequestUserInterface } from "../../middleware/requestUserInterface";
+import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { IUpdateMyProfileInterface } from "./user.interface";
 import { Role } from "../../../generated/prisma/enums";
 
@@ -53,9 +53,6 @@ const updateRoleService = async (
   role: Role,
   id: string,
 ) => {
-  console.log("ID from body:", id);
-  console.log("Role from body:", role);
-
   const userData = await prisma.user.findUnique({
     where: {
       id,

@@ -1,4 +1,4 @@
-import { IRequestUserInterface } from "../middleware/requestUserInterface";
+import { IRequestUserInterface } from "../interface/requestUserInterface";
 
 declare global {
   namespace Express {

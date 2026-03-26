@@ -1,6 +1,6 @@
 import status from "http-status";
 import z from "zod";
-import { TErrorSources } from "./error.interface";
+import { TErrorSources } from "../interface/error.interface";
 
 export const handleZodError = (err: z.ZodError) => {
   const statusCode = status.BAD_REQUEST;
