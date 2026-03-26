@@ -3,16 +3,19 @@ import { sendResponse } from "../../shared/sendResponse";
 import { Request, Response } from "express";
 import { catchAsync } from "../../shared/catchAsync";
 import { adminService } from "./admin.service";
+import { IQueryParams } from "../../interface/query.interface";
 
 const getAllUsersController = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await adminService.getAllUsersService();
+    const query = req.query;
+    const result = await adminService.getAllUsersService(query as IQueryParams);
 
     sendResponse(res, {
       ok: true,
       statusCode: status.OK,
       message: "All users fetched successfully",
-      data: result,
+      meta: result.meta,
+      data: result.data,
     });
   },
 );
@@ -30,7 +33,35 @@ const deleteUserController = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const banUserController = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = req.user;
+  const result = await adminService.banUserService(id as string, user!, req.body);
+
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "User banned successfully",
+    data: result,
+  });
+});
+
+const updateRoleController = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const { id, role } = req.body;
+  const result = await adminService.updateRoleService(user!, role, id);
+
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "Role updated successfully",
+    data: result,
+  });
+});
+
 export const adminController = {
   getAllUsersController,
   deleteUserController,
+  banUserController,
+  updateRoleController,
 };

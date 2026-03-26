@@ -1,21 +1,46 @@
 import status from "http-status";
-import { prisma } from "../../lib/prisma";
 import AppError from "../../middleware/appError";
 import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { Role, UserStatus } from "../../../generated/prisma/enums";
+import { IQueryParams } from "../../interface/query.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { Prisma } from "../../../generated/prisma/client";
+import {
+  userFilterableFields,
+  userIncludingConfig,
+  userSearchedFields,
+} from "./users.constant";
+import { prisma } from "../../lib/prisma";
+import { User } from "../../../generated/prisma/client";
 
-const getAllUsersService = async () => {
-  const usersData = await prisma.user.findMany({
-    where: {
-      isDeleted: false,
-    },
-    include: {
+const getAllUsersService = async (query: IQueryParams) => {
+  const queryBuilders = new QueryBuilder<
+    User,
+    Prisma.UserWhereInput,
+    Prisma.UserInclude
+  >(prisma.user, query, {
+    searchableFields: userSearchedFields,
+    filterableFields: userFilterableFields,
+  });
+
+  const result = await queryBuilders
+    .search()
+    .filter()
+    .where({ isDeleted: false })
+    .sort()
+    .include({
       events: true,
       invitationsSent: true,
       invitationsRecieved: true,
-    },
-  });
-  return usersData;
+    })
+    .dynamicInclude(userIncludingConfig)
+    .fields()
+    .pagination()
+    .sort()
+    .execute();
+
+  // console.log("result ~ 🔑🕙", result);
+  return result;
 };
 
 const deleteUserService = async (id: string, user: IRequestUserInterface) => {
@@ -77,7 +102,85 @@ const deleteUserService = async (id: string, user: IRequestUserInterface) => {
   return result;
 };
 
+const banUserService = async (
+  id: string,
+  user: IRequestUserInterface,
+  payload: { status: UserStatus },
+) => {
+  // admin can't ban himself
+  if (id === user.userId) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "You cannot ban your own admin account.",
+    );
+  }
+
+  // find user to ban
+  const userData = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!userData) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  if (userData.status === UserStatus.DELETED) {
+    throw new AppError(status.BAD_REQUEST, "User is already deleted");
+  }
+
+  if (userData.status === payload.status) {
+    throw new AppError(status.BAD_REQUEST, `User is already ${payload.status}`);
+  }
+
+  const result = await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      status: payload.status,
+    },
+  });
+
+  return result;
+};
+
+const updateRoleService = async (
+  role: Role,
+  id: string,
+) => {
+ // check if user exists
+  const userData = await prisma.user.findUnique({
+    where: {
+      id,
+      isDeleted: false,
+    },
+  });
+
+  if (!userData) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  // already has this role
+  if (userData.role === role) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      `User already has the role of ${role}`,
+    );
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userData.id },
+    data: { role },
+  });
+
+  return updatedUser;
+};
+
 export const adminService = {
   getAllUsersService,
   deleteUserService,
+  banUserService,
+  updateRoleService,
 };

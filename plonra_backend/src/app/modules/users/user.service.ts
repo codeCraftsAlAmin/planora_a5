@@ -48,14 +48,10 @@ const updateMyProfileService = async (
   return updatedUserData;
 };
 
-const updateRoleService = async (
-  user: IRequestUserInterface,
-  role: Role,
-  id: string,
-) => {
+const becomeHostService = async (user: IRequestUserInterface) => {
   const userData = await prisma.user.findUnique({
     where: {
-      id,
+      id: user.userId,
       isDeleted: false,
     },
   });
@@ -64,34 +60,26 @@ const updateRoleService = async (
     throw new AppError(status.NOT_FOUND, "User not found");
   }
 
-  if (user.role !== Role.ADMIN) {
-    if (user.userId !== id) {
-      throw new AppError(
-        status.FORBIDDEN,
-        "You are not authorized to change another user's role.",
-      );
-    }
+  // already a host or admin
+  if (userData.role === Role.HOST) {
+    throw new AppError(status.BAD_REQUEST, "You are already a host");
   }
 
-  // user can only update role to host
-  if (user.role === Role.USER && role !== Role.HOST) {
-    throw new AppError(status.FORBIDDEN, "You can only update role to host");
+  if (userData.role === Role.ADMIN) {
+    throw new AppError(status.BAD_REQUEST, "Admins cannot become a host");
   }
 
-  const updatedUserData = await prisma.user.update({
-    where: {
-      id,
-    },
-    data: {
-      role,
-    },
+  const updatedUser = await prisma.user.update({
+    where: { id: user.userId },
+    data: { role: Role.HOST },
   });
 
-  return updatedUserData;
+  return updatedUser;
 };
 
 export const userService = {
   getMyProfileService,
   updateMyProfileService,
-  updateRoleService,
+     ervice,
+  becomeHostService,
 };

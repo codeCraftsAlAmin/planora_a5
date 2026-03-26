@@ -36,15 +36,14 @@ const updateMyProfileController = catchAsync(
   },
 );
 
-const updateRoleController = catchAsync(async (req: Request, res: Response) => {
+const becomeHostController = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
-  const { id, role } = req.body;
-  const result = await userService.updateRoleService(user!, role, id);
+  const result = await userService.becomeHostService(user!);
 
   sendResponse(res, {
     ok: true,
     statusCode: status.OK,
-    message: "Role updated successfully",
+    message: "You are now a host",
     data: result,
   });
 });
@@ -52,5 +51,5 @@ const updateRoleController = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
   getMyProfileController,
   updateMyProfileController,
-  updateRoleController,
+  becomeHostController,
 };

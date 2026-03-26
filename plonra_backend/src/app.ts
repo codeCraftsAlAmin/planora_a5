@@ -7,8 +7,17 @@ import { envVars } from "./app/config/env";
 import cookieParser from "cookie-parser";
 import { userRouter } from "./app/modules/users/user.route";
 import { adminRouter } from "./app/modules/admin/admin.route";
+import qs from "qs";
+import path from "path";
 
 const app: Application = express();
+
+// for query builder
+app.set("query parser", (str: string) => qs.parse(str));
+
+// for ejs
+app.set("view engine", "ejs");
+app.set("views", path.resolve(process.cwd(), `src/app/templates`));
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -44,10 +53,10 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello, TypeScript + Express!");
 });
 
-// global error handler
-app.use(globalErrorHandler);
-
 // route error handler
 app.use(routeError);
+
+// global error handler
+app.use(globalErrorHandler);
 
 export default app;

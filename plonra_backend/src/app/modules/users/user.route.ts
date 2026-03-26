@@ -24,11 +24,13 @@ router.put(
   userController.updateMyProfileController,
 );
 
-// update role route
+
+
+// become a host route
 router.put(
-  "/update/role",
-  checkAuth(Role.ADMIN, Role.USER),
-  userController.updateRoleController,
+  "/become-host",
+  checkAuth(Role.USER),
+  userController.becomeHostController,
 );
 
 export const userRouter: Router = router;
