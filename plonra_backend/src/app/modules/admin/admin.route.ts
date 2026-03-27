@@ -20,7 +20,7 @@ router.delete(
 );
 
 // ban and unban user
-router.patch(
+router.put(
   "/ban/user/:id",
   checkAuth(Role.ADMIN),
   adminController.banUserController,
@@ -31,6 +31,13 @@ router.put(
   "/update/role",
   checkAuth(Role.ADMIN),
   adminController.updateRoleController,
+);
+
+// update event isFeatured route
+router.put(
+  "/update/featured/:id",
+  checkAuth(Role.ADMIN),
+  adminController.updateFeaturedController,
 );
 
 export const adminRouter: Router = router;

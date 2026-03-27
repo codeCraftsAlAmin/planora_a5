@@ -36,7 +36,11 @@ const deleteUserController = catchAsync(async (req: Request, res: Response) => {
 const banUserController = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const user = req.user;
-  const result = await adminService.banUserService(id as string, user!, req.body);
+  const result = await adminService.banUserService(
+    id as string,
+    user!,
+    req.body,
+  );
 
   sendResponse(res, {
     ok: true,
@@ -47,9 +51,8 @@ const banUserController = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateRoleController = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user;
   const { id, role } = req.body;
-  const result = await adminService.updateRoleService(user!, role, id);
+  const result = await adminService.updateRoleService(role, id);
 
   sendResponse(res, {
     ok: true,
@@ -59,9 +62,27 @@ const updateRoleController = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateFeaturedController = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await adminService.updateFeaturedService(
+      id as string,
+      req.body,
+    );
+
+    sendResponse(res, {
+      ok: true,
+      statusCode: status.OK,
+      message: "Featured updated successfully",
+      data: result,
+    });
+  },
+);
+
 export const adminController = {
   getAllUsersController,
   deleteUserController,
   banUserController,
   updateRoleController,
+  updateFeaturedController,
 };

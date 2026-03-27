@@ -51,4 +51,5 @@ enum UserStatus {
     INACTIVE
     DELETED
     BANNED
+    UNBANNED
 }

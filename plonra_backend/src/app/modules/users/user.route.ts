@@ -24,8 +24,6 @@ router.put(
   userController.updateMyProfileController,
 );
 
-
-
 // become a host route
 router.put(
   "/become-host",

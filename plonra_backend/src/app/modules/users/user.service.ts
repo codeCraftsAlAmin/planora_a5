@@ -80,6 +80,5 @@ const becomeHostService = async (user: IRequestUserInterface) => {
 export const userService = {
   getMyProfileService,
   updateMyProfileService,
-     ervice,
   becomeHostService,
 };

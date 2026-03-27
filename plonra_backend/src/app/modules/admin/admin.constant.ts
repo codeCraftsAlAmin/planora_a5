@@ -1,3 +1,4 @@
+// users constant
 export const userSearchedFields = ["name", "email"];
 export const userFilterableFields = ["role", "status", "gender"];
 

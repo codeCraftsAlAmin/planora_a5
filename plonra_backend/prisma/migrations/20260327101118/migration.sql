@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "events" ALTER COLUMN "type" SET DEFAULT 'PUBLIC',
+ALTER COLUMN "fee" SET DEFAULT 0;

@@ -9,6 +9,7 @@ import { userRouter } from "./app/modules/users/user.route";
 import { adminRouter } from "./app/modules/admin/admin.route";
 import qs from "qs";
 import path from "path";
+import { eventRouter } from "./app/modules/events/event.route";
 
 const app: Application = express();
 
@@ -38,6 +39,9 @@ app.use(
     credentials: true,
   }),
 );
+
+// event router
+app.use("/api/v1/events", eventRouter);
 
 // auth router
 app.use("/api/v1/auth", authRouter);

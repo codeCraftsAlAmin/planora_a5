@@ -9,7 +9,7 @@ import {
   userFilterableFields,
   userIncludingConfig,
   userSearchedFields,
-} from "./users.constant";
+} from "./admin.constant";
 import { prisma } from "../../lib/prisma";
 import { User } from "../../../generated/prisma/client";
 
@@ -36,7 +36,6 @@ const getAllUsersService = async (query: IQueryParams) => {
     .dynamicInclude(userIncludingConfig)
     .fields()
     .pagination()
-    .sort()
     .execute();
 
   // console.log("result ~ 🔑🕙", result);
@@ -146,11 +145,8 @@ const banUserService = async (
   return result;
 };
 
-const updateRoleService = async (
-  role: Role,
-  id: string,
-) => {
- // check if user exists
+const updateRoleService = async (role: Role, id: string) => {
+  // check if user exists
   const userData = await prisma.user.findUnique({
     where: {
       id,
@@ -178,9 +174,41 @@ const updateRoleService = async (
   return updatedUser;
 };
 
+const updateFeaturedService = async (
+  id: string,
+  payload: { isFeatured: boolean },
+) => {
+  // check if event exists
+  const eventData = await prisma.events.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!eventData) {
+    throw new AppError(status.NOT_FOUND, "Event not found");
+  }
+
+  // already has this featured status
+  if (eventData.isFeatured === payload.isFeatured) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      `Event is already ${payload.isFeatured}`,
+    );
+  }
+
+  const updatedEvent = await prisma.events.update({
+    where: { id: eventData.id },
+    data: { isFeatured: payload.isFeatured },
+  });
+
+  return updatedEvent;
+};
+
 export const adminService = {
   getAllUsersService,
   deleteUserService,
   banUserService,
   updateRoleService,
+  updateFeaturedService,
 };

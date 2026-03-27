@@ -23,7 +23,7 @@ export const sendResponse = <T>(
     ok,
     statusCode,
     message,
-    meta,
     data,
+    meta,
   });
 };

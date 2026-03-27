@@ -443,13 +443,10 @@ export class QueryBuilder<
 
   // parse filter value
   private parseFilterValue(value: unknown): unknown {
-    if (value === true) {
-      return true;
-    }
+    if (value === "true") return true;
+    if (value === "false") return false;
 
-    if (value === false) {
-      return false;
-    }
+    if (typeof value === "boolean") return value;
 
     if (typeof value === "string" && value !== "" && !isNaN(Number(value))) {
       return Number(value);
