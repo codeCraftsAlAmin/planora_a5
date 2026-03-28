@@ -1,17 +1,21 @@
 model Events {
     id String @id @default(uuid())
 
-    title       String
-    date        DateTime
-    time        String
-    venue       String
-    isFeatured  Boolean   @default(false)
-    type        EventType @default(PUBLIC)
-    description String?
-    image       String?
-    fee         Float?    @default(0)
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    title        String
+    date         DateTime
+    time         String
+    venue        String
+    isFeatured   Boolean     @default(false)
+    type         EventType   @default(PUBLIC)
+    status       EventStatus @default(UPCOMING)
+    description  String?
+    image        String?
+    fee          Float       @default(0)
+    maxMembers   Int         @default(100)
+    totalMembers Int         @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     // relations
     organizerId         String
@@ -24,5 +28,6 @@ model Events {
     @@index([date], map: "idx_events_date")
     @@index([time], map: "idx_events_time")
     @@index([type], map: "idx_events_type")
+    @@index([status], map: "idx_events_status")
     @@map("events")
 }

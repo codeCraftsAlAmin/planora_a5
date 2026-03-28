@@ -4,14 +4,13 @@ import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { Role, UserStatus } from "../../../generated/prisma/enums";
 import { IQueryParams } from "../../interface/query.interface";
 import { QueryBuilder } from "../../utils/QueryBuilder";
-import { Prisma } from "../../../generated/prisma/client";
+import { Prisma, User } from "../../../generated/prisma/client";
+import { prisma } from "../../lib/prisma";
 import {
   userFilterableFields,
   userIncludingConfig,
   userSearchedFields,
 } from "./admin.constant";
-import { prisma } from "../../lib/prisma";
-import { User } from "../../../generated/prisma/client";
 
 const getAllUsersService = async (query: IQueryParams) => {
   const queryBuilders = new QueryBuilder<

@@ -3,6 +3,13 @@ enum EventType {
     PRIVATE
 }
 
+enum EventStatus {
+    UPCOMING
+    ONGOING
+    COMPLETED
+    CANCELLED
+}
+
 enum RegistrationStatus {
     PROCESSING
     APPROVED

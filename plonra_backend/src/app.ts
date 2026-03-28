@@ -10,6 +10,8 @@ import { adminRouter } from "./app/modules/admin/admin.route";
 import qs from "qs";
 import path from "path";
 import { eventRouter } from "./app/modules/events/event.route";
+import { eventRegisterRouter } from "./app/modules/eventRegister/eventRegister.route";
+import { paymentController } from "./app/modules/payment/payment.controller";
 
 const app: Application = express();
 
@@ -19,6 +21,13 @@ app.set("query parser", (str: string) => qs.parse(str));
 // for ejs
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), `src/app/templates`));
+
+// for stripe webhook
+app.use(
+  "/api/v1/payment/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handlePaymentWebhookController,
+);
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -39,6 +48,9 @@ app.use(
     credentials: true,
   }),
 );
+
+// event register router
+app.use("/api/v1/event-register", eventRegisterRouter);
 
 // event router
 app.use("/api/v1/events", eventRouter);
