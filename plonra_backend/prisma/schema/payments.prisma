@@ -11,10 +11,10 @@ model Payments {
     eventId String
     event   Events @relation(fields: [eventId], references: [id], onDelete: Cascade)
     userId  String
+    user    User   @relation(fields: [userId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    user      User     @relation(fields: [userId], references: [id])
 
     @@index([userId], map: "idx_payments_user_id")
     @@index([eventId], map: "idx_payments_event_id")

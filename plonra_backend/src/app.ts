@@ -12,6 +12,8 @@ import path from "path";
 import { eventRouter } from "./app/modules/events/event.route";
 import { eventRegisterRouter } from "./app/modules/eventRegister/eventRegister.route";
 import { paymentController } from "./app/modules/payment/payment.controller";
+import cron from "node-cron";
+import { eventRegisterService } from "./app/modules/eventRegister/eventRegister.service";
 
 const app: Application = express();
 
@@ -48,6 +50,19 @@ app.use(
     credentials: true,
   }),
 );
+
+// cancel unpaid registration every 30 minutes
+cron.schedule("*/30 * * * *", async () => {
+  try {
+    console.log("Running cron job to cancel unpaid registrations...");
+    await eventRegisterService.cancelUnpaidRegistration();
+  } catch (error: any) {
+    console.error(
+      "Error occurred while canceling unpaid registrations:",
+      error.message,
+    );
+  }
+});
 
 // event register router
 app.use("/api/v1/event-register", eventRegisterRouter);

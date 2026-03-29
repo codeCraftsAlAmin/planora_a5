@@ -20,6 +20,7 @@ enum RegistrationStatus {
 enum PaymentStatus {
     PAID
     UNPAID
+    FREE
 }
 
 enum InvitationStatus {
@@ -34,11 +35,12 @@ enum NotificationType {
     JOIN_REQUEST
     REQUEST_APPROVED
     REQUEST_REJECTED
+    REQUEST_PENDING
     INVITATION_RECEIVED
-    REVIEW_POSTED
     EVENT_UPDATED
     EVENT_CANCELLED
     BANNED_FROM_EVENT
+    REVIEW_POSTED
 }
 
 enum Gender {

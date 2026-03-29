@@ -32,19 +32,29 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
         const paymentId = session.metadata?.paymentId as string;
         const eventId = session.metadata?.eventId as string;
 
-        if (!paymentId || !eventId) {
-          throw new AppError(status.BAD_REQUEST, "Invalid payment or event ID");
-        }
-
         // find payment
         const paymentData = await prisma.payments.findUnique({
           where: {
             id: paymentId,
           },
+          include: {
+            user: true,
+          },
+        });
+
+        // find event
+        const eventData = await prisma.events.findUnique({
+          where: {
+            id: eventId,
+          },
         });
 
         if (!paymentData) {
           throw new AppError(status.NOT_FOUND, "Payment not found");
+        }
+
+        if (!eventData) {
+          throw new AppError(status.NOT_FOUND, "Event not found");
         }
 
         await prisma.$transaction(async (tx) => {
@@ -59,6 +69,7 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
                   ? PaymentStatus.PAID
                   : PaymentStatus.UNPAID,
               stripEventId: event.id,
+              transactionId: session.id,
               paymentGatewayData: session as any,
             },
           });
@@ -73,21 +84,30 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
             },
             data: {
               paymentStatus: PaymentStatus.PAID,
-              status: RegistrationStatus.APPROVED,
+              status: RegistrationStatus.PROCESSING,
             },
           });
 
-          // add notification
-          const updateNotification = await tx.notification.create({
+          // send notification to user
+          await tx.notification.create({
             data: {
               userId: paymentData.userId,
               type: NotificationType.PAYMENT_SUCCESS,
-              message: "Your payment has been processed successfully",
+              message: `Your payment for ${eventData.title} has been processed successfully, wait for approval`,
+            },
+          });
+
+          // send notification to organizer
+          await tx.notification.create({
+            data: {
+              userId: eventData.organizerId,
+              type: NotificationType.PAYMENT_SUCCESS,
+              message: `New payment received for ${eventData.title} from ${paymentData.user.name}.`,
             },
           });
 
           // increase the number of members
-          const updateMemberCount = await tx.events.update({
+          await tx.events.update({
             where: {
               id: paymentData.eventId,
             },
@@ -101,8 +121,6 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
           return {
             updatedPayment,
             updatedEventRegistration,
-            updateNotification,
-            updateMemberCount,
           };
         });
 
