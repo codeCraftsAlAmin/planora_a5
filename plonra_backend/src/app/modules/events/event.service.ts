@@ -115,13 +115,17 @@ const deleteEventService = async (user: IRequestUserInterface, id: string) => {
     );
   }
 
-  // if event status is ongoing or completed or cancelled
-  if (
-    eventData.status === EventStatus.ONGOING ||
-    eventData.status === EventStatus.COMPLETED ||
-    eventData.status === EventStatus.CANCELLED
-  ) {
-    throw new AppError(status.BAD_REQUEST, "Event is already started");
+  // can not delete on going event
+  if (eventData.status === EventStatus.ONGOING) {
+    throw new AppError(status.BAD_REQUEST, "Event is ongoing");
+  }
+
+  // can not delete upcoming event with members
+  if (eventData.status === EventStatus.UPCOMING && eventData.totalMembers > 0) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Can not delete event with active members",
+    );
   }
 
   // delete event
