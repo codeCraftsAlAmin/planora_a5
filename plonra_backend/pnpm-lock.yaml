@@ -105,6 +105,9 @@ importers:
       '@types/nodemailer':
         specifier: ^7.0.11
         version: 7.0.11
+      '@types/pdfkit':
+        specifier: ^0.17.5
+        version: 0.17.5
       '@types/pg':
         specifier: ^8.18.0
         version: 8.18.0
@@ -612,6 +615,9 @@ packages:
 
   '@types/nodemailer@7.0.11':
     resolution: {integrity: sha512-E+U4RzR2dKrx+u3N4DlsmLaDC6mMZOM/TPROxA0UAPiTgI0y4CEFBmZE+coGWTjakDriRsXG368lNk1u9Q0a2g==}
+
+  '@types/pdfkit@0.17.5':
+    resolution: {integrity: sha512-T3ZHnvF91HsEco5ClhBCOuBwobZfPcI2jaiSHybkkKYq4KhVIIurod94JVKvDIG0JXT6o3KiERC0X0//m8dyrg==}
 
   '@types/pg@8.11.11':
     resolution: {integrity: sha512-kGT1qKM8wJQ5qlawUrEkXgvMSXoV213KfMGXcwfDwUIfUHXqXYXOfS1nE1LINRJVVVx5wCm70XnFlMHaIcQAfw==}
@@ -2397,6 +2403,10 @@ snapshots:
       undici-types: 7.18.2
 
   '@types/nodemailer@7.0.11':
+    dependencies:
+      '@types/node': 25.5.0
+
+  '@types/pdfkit@0.17.5':
     dependencies:
       '@types/node': 25.5.0
 

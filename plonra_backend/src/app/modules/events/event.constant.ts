@@ -1,5 +1,5 @@
 // events constant
-export const eventSearchedFields = ["title", "description"];
+export const eventSearchedFields = ["title", "organizer.name"];
 export const eventFilterableFields = [
   "type",
   "isFeatured",

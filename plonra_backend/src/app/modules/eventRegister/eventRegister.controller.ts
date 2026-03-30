@@ -9,11 +9,15 @@ const createEventRegisterController = catchAsync(
     const user = req.user;
     const id = req.params.id;
 
-    await eventRegisterService.createEventRegisterService(user!, id as string);
+    const result = await eventRegisterService.createEventRegisterService(
+      user!,
+      id as string,
+    );
     sendResponse(res, {
       ok: true,
       statusCode: status.CREATED,
       message: "Event registered successfully",
+      data: result,
     });
   },
 );
@@ -74,4 +78,5 @@ export const eventRegisterController = {
   createEventRegisterController,
   getAllEventRegistrationsController,
   updateRegistrationController,
+  refundRegistrationController,
 };

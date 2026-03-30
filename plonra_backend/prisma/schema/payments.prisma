@@ -6,6 +6,7 @@ model Payments {
     amount             Float
     status             PaymentStatus @default(UNPAID)
     paymentGatewayData Json?
+    invoiceUrl         String?
 
     // realtions 
     eventId String

@@ -1,4 +1,4 @@
-import { EventType } from "../../../generated/prisma/enums";
+import { EventStatus, EventType } from "../../../generated/prisma/enums";
 
 export interface ICreateEventInterface {
   title: string;
@@ -17,9 +17,10 @@ export interface IUpdateEventInterface {
   date?: string;
   time?: string;
   venue?: string;
-  isFeatured?: boolean;
   type?: EventType;
   description?: string;
   image?: string;
   fee?: number;
+  status?: EventStatus;
+  maxMembers?: number;
 }

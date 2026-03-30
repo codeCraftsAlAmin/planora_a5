@@ -8,7 +8,12 @@ import {
 import AppError from "../../middleware/appError";
 import { convertDateTime } from "./timeZoneUtils";
 import { deleteFileFromCloudinary } from "../../config/cloudinary.config";
-import { Role } from "../../../generated/prisma/enums";
+import {
+  EventStatus,
+  NotificationType,
+  Role,
+  UserStatus,
+} from "../../../generated/prisma/enums";
 import { Events, Prisma } from "../../../generated/prisma/client";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { IQueryParams } from "../../interface/query.interface";
@@ -31,6 +36,14 @@ const createEventService = async (
 
   if (!userData) {
     throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  // banned host can not create event
+  if (userData.status === UserStatus.BANNED) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "You are banned from creating events",
+    );
   }
 
   // convert date and time
@@ -102,6 +115,15 @@ const deleteEventService = async (user: IRequestUserInterface, id: string) => {
     );
   }
 
+  // if event status is ongoing or completed or cancelled
+  if (
+    eventData.status === EventStatus.ONGOING ||
+    eventData.status === EventStatus.COMPLETED ||
+    eventData.status === EventStatus.CANCELLED
+  ) {
+    throw new AppError(status.BAD_REQUEST, "Event is already started");
+  }
+
   // delete event
   const result = await prisma.events.delete({
     where: {
@@ -117,8 +139,6 @@ const deleteEventService = async (user: IRequestUserInterface, id: string) => {
   return result;
 };
 
-// TODO: prevent host to update fee if event is booked
-// TODO: let the updated schedule to the booked user via email
 const updateMyEventService = async (
   user: IRequestUserInterface,
   id: string,
@@ -154,15 +174,59 @@ const updateMyEventService = async (
     );
   }
 
+  // check if event is not started
+  if (
+    eventData.status === EventStatus.ONGOING ||
+    eventData.status === EventStatus.COMPLETED ||
+    eventData.status === EventStatus.CANCELLED
+  ) {
+    throw new AppError(status.BAD_REQUEST, "Event is already started");
+  }
+
   let convertEventDate = eventData.date;
   // convert date and time
   if (payload.date) {
     convertEventDate = convertDateTime(payload.date);
   }
 
+  // new date must be in future
+  if (convertEventDate < new Date()) {
+    throw new AppError(status.BAD_REQUEST, "Event date must be in future");
+  }
+
   // delete image from cloudinary if new image is uploaded
   if (payload.image && eventData.image && payload.image !== eventData.image) {
     await deleteFileFromCloudinary(eventData.image);
+  }
+
+  // only allows to change fee if member is 0
+  if (payload.fee && eventData.fee !== payload.fee) {
+    const memberCount = await prisma.eventsRegistrations.count({
+      where: {
+        eventId: id,
+      },
+    });
+    if (memberCount > 0) {
+      throw new AppError(
+        status.BAD_REQUEST,
+        "You can't change fee if member is booked",
+      );
+    }
+  }
+
+  // maxNumber can not be less than current participant
+  if (payload.maxMembers && eventData.maxMembers !== payload.maxMembers) {
+    const participantCount = await prisma.eventsRegistrations.count({
+      where: {
+        eventId: id,
+      },
+    });
+    if (participantCount > payload.maxMembers) {
+      throw new AppError(
+        status.BAD_REQUEST,
+        "You can't change maxNumber if participant is booked",
+      );
+    }
   }
 
   // update event
@@ -174,6 +238,24 @@ const updateMyEventService = async (
       ...payload,
       date: convertEventDate,
     },
+  });
+
+  // let the users know about the update via notification
+  const users = await prisma.eventsRegistrations.findMany({
+    where: {
+      eventId: id,
+    },
+  });
+
+  const userToInform = users.map((user) => ({
+    userId: user.userId,
+    eventId: id,
+    type: NotificationType.EVENT_UPDATED,
+    message: `Event "${eventData.title}" has been updated. Check it out`,
+  }));
+
+  await prisma.notification.createMany({
+    data: userToInform,
   });
 
   return result;

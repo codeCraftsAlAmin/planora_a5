@@ -7,6 +7,9 @@ import {
   PaymentStatus,
   RegistrationStatus,
 } from "../../../generated/prisma/enums";
+import { uploadFileToCloudinary } from "../../config/cloudinary.config";
+import { generateInvoicePdf } from "./payment.utils";
+import { sendEmail } from "../../utils/email";
 
 const handlePaymentWebhook = async (event: Stripe.Event) => {
   // find payment data
@@ -123,6 +126,81 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
             updatedEventRegistration,
           };
         });
+
+        // TODO: generate invoice pdf
+        let invoiceUrl = null;
+        let pdfBuffer: Buffer | null = null;
+
+        if (session.payment_status === "paid") {
+          try {
+            pdfBuffer = await generateInvoicePdf({
+              invoiceId: paymentId,
+              userName: paymentData.user.name,
+              userEmail: paymentData.user.email,
+              eventName: eventData.title,
+              eventDate: new Date(eventData.date).toString(),
+              amount: paymentData.amount,
+              transactionId: session.id,
+              paymentDate: new Date().toISOString(),
+            });
+
+            // upload invoice pdf to cloudinary
+            const cloudinaryResponse = await uploadFileToCloudinary(
+              pdfBuffer,
+              `planora/payments/invoice-${paymentId}-${Date.now()}.pdf`,
+            );
+
+            invoiceUrl = cloudinaryResponse.secure_url;
+
+            if (invoiceUrl) {
+              await prisma.payments.update({
+                where: {
+                  id: paymentId,
+                },
+                data: {
+                  invoiceUrl,
+                },
+              });
+            }
+
+            console.log(
+              `✅ Invoice PDF generated and uploaded for payment ${paymentId}`,
+            );
+          } catch (error) {
+            console.error("❌ Error generating/uploading invoice PDF:", error);
+          }
+        }
+
+        // TODO: send email to user with invoice pdf
+        if (session.payment_status === "paid" && invoiceUrl) {
+          try {
+            await sendEmail({
+              to: paymentData.user.email,
+              subject: `Payment Confirmation & Invoice - Appointment with ${eventData.title}`,
+              templateName: "invoice",
+              templateData: {
+                userName: paymentData.user.name,
+                invoiceId: paymentId,
+                transactionId: session.id,
+                eventName: eventData.title,
+                eventDate: new Date(eventData.date).toISOString(),
+                amount: paymentData.amount,
+                paymentDate: new Date().toISOString(),
+                invoiceUrl: invoiceUrl,
+              },
+              attachments: [
+                {
+                  fileName: `invoice-${paymentId}.pdf`,
+                  content: pdfBuffer || Buffer.from("Invoice not found"),
+                  contentType: "application/pdf",
+                },
+              ],
+            });
+            console.log(`✅ Invoice email sent to ${paymentData.user.email}`);
+          } catch (error) {
+            console.error("❌ Error sending email:", error);
+          }
+        }
 
         break;
       }
