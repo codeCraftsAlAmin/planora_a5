@@ -8,7 +8,7 @@ const router: Router = Router();
 // get all users route
 router.get(
   "/users",
-  checkAuth(Role.ADMIN),
+  checkAuth(Role.ADMIN, Role.HOST),
   adminController.getAllUsersController,
 );
 

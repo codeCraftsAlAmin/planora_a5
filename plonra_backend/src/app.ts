@@ -14,6 +14,7 @@ import { eventRegisterRouter } from "./app/modules/eventRegister/eventRegister.r
 import { paymentController } from "./app/modules/payment/payment.controller";
 import cron from "node-cron";
 import { eventRegisterService } from "./app/modules/eventRegister/eventRegister.service";
+import { notificationRouter } from "./app/modules/notifications/notification.route";
 
 const app: Application = express();
 
@@ -66,6 +67,9 @@ cron.schedule("*/30 * * * *", async () => {
 
 // event register router
 app.use("/api/v1/event-register", eventRegisterRouter);
+
+// notification router
+app.use("/api/v1/notifications", notificationRouter);
 
 // event router
 app.use("/api/v1/events", eventRouter);

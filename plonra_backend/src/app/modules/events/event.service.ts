@@ -128,10 +128,14 @@ const deleteEventService = async (user: IRequestUserInterface, id: string) => {
     );
   }
 
-  // delete event
-  const result = await prisma.events.delete({
+  // soft delete event
+  const result = await prisma.events.update({
     where: {
       id,
+    },
+    data: {
+      isDeleted: true,
+      status: EventStatus.CANCELLED,
     },
   });
 
@@ -277,6 +281,7 @@ const getAllEventsService = async (query: IQueryParams) => {
 
   const result = await queryBuilders
     .search()
+    .where({ isDeleted: false })
     .filter()
     .include({
       organizer: true,
