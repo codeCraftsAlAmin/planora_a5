@@ -2,44 +2,7 @@ import status from "http-status";
 import AppError from "../../middleware/appError";
 import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { Role, UserStatus } from "../../../generated/prisma/enums";
-import { IQueryParams } from "../../interface/query.interface";
-import { QueryBuilder } from "../../utils/QueryBuilder";
-import { Prisma, User } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
-import {
-  userFilterableFields,
-  userIncludingConfig,
-  userSearchedFields,
-} from "./admin.constant";
-
-const getAllUsersService = async (query: IQueryParams) => {
-  const queryBuilders = new QueryBuilder<
-    User,
-    Prisma.UserWhereInput,
-    Prisma.UserInclude
-  >(prisma.user, query, {
-    searchableFields: userSearchedFields,
-    filterableFields: userFilterableFields,
-  });
-
-  const result = await queryBuilders
-    .search()
-    .filter()
-    .where({ isDeleted: false })
-    .sort()
-    .include({
-      events: true,
-      invitationsSent: true,
-      invitationsRecieved: true,
-    })
-    .dynamicInclude(userIncludingConfig)
-    .fields()
-    .pagination()
-    .execute();
-
-  // console.log("result ~ 🔑🕙", result);
-  return result;
-};
 
 const deleteUserService = async (id: string, user: IRequestUserInterface) => {
   // admin can't delete himself
@@ -205,7 +168,6 @@ const updateFeaturedService = async (
 };
 
 export const adminService = {
-  getAllUsersService,
   deleteUserService,
   banUserService,
   updateRoleService,

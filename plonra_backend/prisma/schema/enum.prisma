@@ -25,6 +25,7 @@ enum PaymentStatus {
 
 enum InvitationStatus {
     PENDING
+    INTERESTED
     ACCEPTED
     REJECTED
 }

@@ -3,22 +3,6 @@ import { sendResponse } from "../../shared/sendResponse";
 import { Request, Response } from "express";
 import { catchAsync } from "../../shared/catchAsync";
 import { adminService } from "./admin.service";
-import { IQueryParams } from "../../interface/query.interface";
-
-const getAllUsersController = catchAsync(
-  async (req: Request, res: Response) => {
-    const query = req.query;
-    const result = await adminService.getAllUsersService(query as IQueryParams);
-
-    sendResponse(res, {
-      ok: true,
-      statusCode: status.OK,
-      message: "All users fetched successfully",
-      meta: result.meta,
-      data: result.data,
-    });
-  },
-);
 
 const deleteUserController = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -80,7 +64,6 @@ const updateFeaturedController = catchAsync(
 );
 
 export const adminController = {
-  getAllUsersController,
   deleteUserController,
   banUserController,
   updateRoleController,

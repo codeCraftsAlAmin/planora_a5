@@ -5,6 +5,7 @@ import { prisma } from "../../lib/prisma";
 import {
   EventStatus,
   EventType,
+  InvitationStatus,
   NotificationType,
   PaymentStatus,
   RegistrationStatus,

@@ -31,4 +31,11 @@ router.put(
   userController.becomeHostController,
 );
 
+// get all users route
+router.get(
+  "/",
+  checkAuth(Role.ADMIN, Role.HOST),
+  userController.getAllUsersController,
+);
+
 export const userRouter: Router = router;

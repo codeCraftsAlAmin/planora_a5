@@ -4,6 +4,14 @@ import AppError from "../../middleware/appError";
 import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { IUpdateMyProfileInterface } from "./user.interface";
 import { Role } from "../../../generated/prisma/enums";
+import { IQueryParams } from "../../interface/query.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { Prisma, User } from "../../../generated/prisma/client";
+import {
+  userFilterableFields,
+  userIncludingConfig,
+  userSearchedFields,
+} from "./user.constant";
 
 const getMyProfileService = async (user: IRequestUserInterface) => {
   const userData = await prisma.user.findUnique({
@@ -77,8 +85,41 @@ const becomeHostService = async (user: IRequestUserInterface) => {
   return updatedUser;
 };
 
+const getAllUsersService = async (
+  query: IQueryParams,
+  user: IRequestUserInterface,
+) => {
+  const queryBuilders = new QueryBuilder<
+    User,
+    Prisma.UserWhereInput,
+    Prisma.UserInclude
+  >(prisma.user, query, {
+    searchableFields: userSearchedFields,
+    filterableFields: userFilterableFields,
+  });
+
+  const result = await queryBuilders
+    .search()
+    .filter()
+    .where({ isDeleted: false, id: { not: user.userId } })
+    .sort()
+    .include({
+      events: true,
+      invitationsSent: true,
+      invitationsRecieved: true,
+    })
+    .dynamicInclude(userIncludingConfig)
+    .fields()
+    .pagination()
+    .execute();
+
+  // console.log("result ~ 🔑🕙", result);
+  return result;
+};
+
 export const userService = {
   getMyProfileService,
   updateMyProfileService,
   becomeHostService,
+  getAllUsersService,
 };

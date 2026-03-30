@@ -5,13 +5,6 @@ import { adminController } from "./admin.controller";
 
 const router: Router = Router();
 
-// get all users route
-router.get(
-  "/users",
-  checkAuth(Role.ADMIN, Role.HOST),
-  adminController.getAllUsersController,
-);
-
 // delete user
 router.delete(
   "/delete/user/:id",

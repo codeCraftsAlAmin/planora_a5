@@ -15,6 +15,7 @@ import { paymentController } from "./app/modules/payment/payment.controller";
 import cron from "node-cron";
 import { eventRegisterService } from "./app/modules/eventRegister/eventRegister.service";
 import { notificationRouter } from "./app/modules/notifications/notification.route";
+import { invitationRouter } from "./app/modules/invitations/invitation.route";
 
 const app: Application = express();
 
@@ -64,6 +65,9 @@ cron.schedule("*/30 * * * *", async () => {
     );
   }
 });
+
+// invitations router
+app.use("/api/v1/invitations", invitationRouter);
 
 // event register router
 app.use("/api/v1/event-register", eventRegisterRouter);
