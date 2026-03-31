@@ -10,19 +10,16 @@ router.post("/send", checkAuth(Role.HOST), invitationController.sendInvitation);
 
 // accept invitaion
 router.post(
-  "/accept/:invitaionId",
+  "/accept/:id",
   checkAuth(Role.USER),
   invitationController.acceptInvitation,
 );
 
-// // reject invitaion
-// router.post(
-//   "/reject",
-//   checkAuth(Role.USER),
-//   invitationController.rejectInvitation,
-// );
-
-// // get all invitaion
-// router.get("/", checkAuth(Role.USER), invitationController.getAllInvitations);
+// reject invitaion
+router.post(
+  "/reject/:id",
+  checkAuth(Role.USER),
+  invitationController.rejectInvitation,
+);
 
 export const invitationRouter: Router = router;

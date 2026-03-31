@@ -93,6 +93,15 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
             },
           });
 
+          // !! update invitation status
+          await tx.invitations.updateMany({
+            where: {
+              eventId: paymentData.eventId,
+              inviteeId: paymentData.userId,
+            },
+            data: { status: InvitationStatus.ACCEPTED },
+          });
+
           // send notification to user
           await tx.notification.create({
             data: {
@@ -109,15 +118,6 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
               type: NotificationType.PAYMENT_SUCCESS,
               message: `New payment received for ${eventData.title} from ${paymentData.user.name}.`,
             },
-          });
-
-          //!! update invitation status
-          await tx.invitations.updateMany({
-            where: {
-              eventId: paymentData.eventId,
-              inviteeId: paymentData.userId,
-            },
-            data: { status: InvitationStatus.ACCEPTED },
           });
 
           // increase the number of members

@@ -2,7 +2,6 @@ import status from "http-status";
 import AppError from "../../middleware/appError";
 import { prisma } from "../../lib/prisma";
 import {
-  EventType,
   InvitationStatus,
   NotificationType,
   PaymentStatus,
@@ -54,6 +53,11 @@ const sendInvitation = async (
 
   if (!inviter) {
     throw new AppError(status.NOT_FOUND, "Inviter not found");
+  }
+
+  // confirm that event belong from correct host
+  if (event.organizerId !== user.userId) {
+    throw new AppError(status.UNAUTHORIZED, "You are not authorized to invite");
   }
 
   // check if user is already invited
@@ -111,12 +115,15 @@ const sendInvitation = async (
 
 const acceptInvitation = async (
   user: IRequestUserInterface,
-  invitaionId: string,
+  eventId: string,
 ) => {
   // find invitation
   const invitation = await prisma.invitations.findUnique({
     where: {
-      id: invitaionId,
+      eventId_inviteeId: {
+        eventId,
+        inviteeId: user.userId,
+      },
     },
     include: {
       event: true,
@@ -158,7 +165,7 @@ const acceptInvitation = async (
       const registerEvent = await tx.eventsRegistrations.create({
         data: {
           eventId: invitation.eventId,
-          userId: user.userId,
+          userId: invitation.inviteeId,
           status: RegistrationStatus.APPROVED,
           paymentStatus: PaymentStatus.FREE,
         },
@@ -169,7 +176,7 @@ const acceptInvitation = async (
         where: {
           eventId_inviteeId: {
             eventId: invitation.eventId,
-            inviteeId: user.userId,
+            inviteeId: invitation.inviteeId,
           },
         },
         data: { status: InvitationStatus.ACCEPTED },
@@ -222,7 +229,7 @@ const acceptInvitation = async (
       const registerEvent = await tx.eventsRegistrations.create({
         data: {
           eventId: invitation.eventId,
-          userId: user.userId,
+          userId: invitation.inviteeId,
           status: RegistrationStatus.PROCESSING,
         },
       });
@@ -230,7 +237,7 @@ const acceptInvitation = async (
       const payment = await tx.payments.create({
         data: {
           eventId: invitation.eventId,
-          userId: user.userId,
+          userId: invitation.inviteeId,
           amount: invitation.event.fee,
           transactionId: "",
           stripEventId: "",
@@ -243,7 +250,7 @@ const acceptInvitation = async (
         where: {
           eventId_inviteeId: {
             eventId: invitation.eventId,
-            inviteeId: user.userId,
+            inviteeId: invitation.inviteeId,
           },
         },
         data: { status: InvitationStatus.INTERESTED },
@@ -288,7 +295,94 @@ const acceptInvitation = async (
   }
 };
 
+const rejectInvitation = async (
+  user: IRequestUserInterface,
+  eventId: string,
+) => {
+
+  const invitation = await prisma.invitations.findUnique({
+    where: {
+      eventId_inviteeId: {
+        eventId,
+        inviteeId: user.userId,
+      },
+    },
+    include: {
+      event: true,
+    },
+  });
+  if (!invitation) {
+    throw new AppError(status.NOT_FOUND, "Invitation not found");
+  }
+
+  // auth check
+  if (invitation.inviteeId !== user.userId) {
+    throw new AppError(status.UNAUTHORIZED, "Not authorized");
+  }
+
+  // check if invitation is already accepted or rejected
+  if (
+    invitation.status === InvitationStatus.ACCEPTED ||
+    invitation.status === InvitationStatus.REJECTED
+  ) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      `Invitation is already ${invitation.status.toLowerCase()}`,
+    );
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // update invitation status
+    const updatedInvitation = await tx.invitations.update({
+      where: {
+        eventId_inviteeId: {
+          eventId,
+          inviteeId: user.userId,
+        },
+      },
+      data: { status: InvitationStatus.REJECTED },
+    });
+
+    // notify the inviter
+    await tx.notification.create({
+      data: {
+        userId: invitation.inviterId,
+        message: `Your guest has declined the invitation for ${invitation.event.title}.`,
+        type: NotificationType.REQUEST_REJECTED,
+      },
+    });
+
+    return updatedInvitation;
+  });
+
+  return result;
+};
+
+const deleteExpiredInvitations = async () => {
+  // find pending invitaions
+  const result = await prisma.invitations.deleteMany({
+    where: {
+      status: {
+        in: [InvitationStatus.PENDING, InvitationStatus.INTERESTED],
+      },
+      event: {
+        date: {
+          lt: new Date(),
+        },
+      },
+    },
+  });
+
+  if (result.count > 0) {
+    console.log(`Successfully cleaned up ${result.count} expired invitations.`);
+  }
+
+  return result;
+};
+
 export const invitationService = {
   sendInvitation,
   acceptInvitation,
+  rejectInvitation,
+  deleteExpiredInvitations,
 };

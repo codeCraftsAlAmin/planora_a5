@@ -22,11 +22,9 @@ const sendInvitation = catchAsync(async (req: Request, res: Response) => {
 
 const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
-  const { invitaionId } = req.params;
-  const result = await invitationService.acceptInvitation(
-    user!,
-    invitaionId as string,
-  );
+  const { id } = req.params;
+
+  const result = await invitationService.acceptInvitation(user!, id as string);
   sendResponse(res, {
     ok: true,
     statusCode: status.OK,
@@ -35,7 +33,21 @@ const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const rejectInvitation = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const id = req.params.id;
+
+  const result = await invitationService.rejectInvitation(user!, id as string);
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "Invitation rejected successfully",
+    data: result,
+  });
+});
+
 export const invitationController = {
   sendInvitation,
   acceptInvitation,
+  rejectInvitation,
 };

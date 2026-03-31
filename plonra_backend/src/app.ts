@@ -16,6 +16,7 @@ import cron from "node-cron";
 import { eventRegisterService } from "./app/modules/eventRegister/eventRegister.service";
 import { notificationRouter } from "./app/modules/notifications/notification.route";
 import { invitationRouter } from "./app/modules/invitations/invitation.route";
+import { invitationService } from "./app/modules/invitations/invitation.service";
 
 const app: Application = express();
 
@@ -56,11 +57,13 @@ app.use(
 // cancel unpaid registration every 30 minutes
 cron.schedule("*/30 * * * *", async () => {
   try {
-    console.log("Running cron job to cancel unpaid registrations...");
+    console.log("Running scheduled cleanup tasks...");
+
     await eventRegisterService.cancelUnpaidRegistration();
+    await invitationService.deleteExpiredInvitations();
   } catch (error: any) {
     console.error(
-      "Error occurred while canceling unpaid registrations:",
+      "Error occurred while running scheduled cleanup tasks:",
       error.message,
     );
   }
