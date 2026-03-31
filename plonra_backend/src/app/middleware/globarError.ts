@@ -6,8 +6,16 @@ import z from "zod";
 import { handleZodError } from "./handleZodError";
 import AppError from "./appError";
 import { deleteUploadedFileFromGlobalErrHand } from "../utils/deleteUploadedFileFromGlobErrHand";
+import { Prisma } from "../../generated/prisma/client";
+import {
+  handlePrismaClientInitializationError,
+  handlePrismaClientKnownRequestError,
+  handlePrismaClientPanicError,
+  handlePrismaClientUnknownRequestError,
+  handlePrismaClientValidationError,
+} from "./prizmaErrHandler";
 
-const globalErrorHandler = async (
+const globalErrorHandler = (
   err: any,
   req: Request,
   res: Response,
@@ -18,13 +26,40 @@ const globalErrorHandler = async (
   }
 
   // delete uploaded files if error
-  await deleteUploadedFileFromGlobalErrHand(req);
+  deleteUploadedFileFromGlobalErrHand(req).catch((error) => {
+    console.error("Failed to delete uploaded files:", error);
+  });
 
   let errSources: TErrorSources[] = [];
   let statusCode: number = status.INTERNAL_SERVER_ERROR;
   let errMessage: string = "Internal Server Error";
 
-  if (err instanceof z.ZodError) {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const simplified = handlePrismaClientKnownRequestError(err);
+    statusCode = simplified.statusCode;
+    errMessage = simplified.message;
+    errSources = simplified.errSources;
+  } else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+    const simplified = handlePrismaClientUnknownRequestError(err);
+    statusCode = simplified.statusCode;
+    errMessage = simplified.message;
+    errSources = simplified.errSources;
+  } else if (err instanceof Prisma.PrismaClientValidationError) {
+    const simplified = handlePrismaClientValidationError(err);
+    statusCode = simplified.statusCode;
+    errMessage = simplified.message;
+    errSources = simplified.errSources;
+  } else if (err instanceof Prisma.PrismaClientInitializationError) {
+    const simplified = handlePrismaClientInitializationError(err);
+    statusCode = simplified.statusCode;
+    errMessage = simplified.message;
+    errSources = simplified.errSources;
+  } else if (err instanceof Prisma.PrismaClientRustPanicError) {
+    const simplified = handlePrismaClientPanicError(err);
+    statusCode = simplified.statusCode;
+    errMessage = simplified.message;
+    errSources = simplified.errSources;
+  } else if (err instanceof z.ZodError) {
     const simplifiedErr = handleZodError(err);
     statusCode = simplifiedErr.statusCode;
     errMessage = simplifiedErr.message;
