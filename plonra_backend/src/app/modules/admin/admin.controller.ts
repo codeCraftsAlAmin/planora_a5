@@ -63,9 +63,22 @@ const updateFeaturedController = catchAsync(
   },
 );
 
+const getAllPaymentsController = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await adminService.getAllPaymentsService();
+    sendResponse(res, {
+      ok: true,
+      statusCode: status.OK,
+      message: "Payments fetched successfully",
+      data: result,
+    });
+  },
+);
+
 export const adminController = {
   deleteUserController,
   banUserController,
   updateRoleController,
   updateFeaturedController,
+  getAllPaymentsController,
 };

@@ -33,4 +33,11 @@ router.put(
   adminController.updateFeaturedController,
 );
 
+// get all payments
+router.get(
+  "/payments",
+  checkAuth(Role.ADMIN),
+  adminController.getAllPaymentsController,
+);
+
 export const adminRouter: Router = router;

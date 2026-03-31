@@ -17,6 +17,7 @@ import { eventRegisterService } from "./app/modules/eventRegister/eventRegister.
 import { notificationRouter } from "./app/modules/notifications/notification.route";
 import { invitationRouter } from "./app/modules/invitations/invitation.route";
 import { invitationService } from "./app/modules/invitations/invitation.service";
+import { reviewsRouter } from "./app/modules/reviews/reviews.route";
 
 const app: Application = express();
 
@@ -68,6 +69,9 @@ cron.schedule("*/30 * * * *", async () => {
     );
   }
 });
+
+// reviews router
+app.use("/api/v1/reviews", reviewsRouter);
 
 // invitations router
 app.use("/api/v1/invitations", invitationRouter);

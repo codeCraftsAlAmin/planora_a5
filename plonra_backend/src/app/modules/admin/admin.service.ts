@@ -167,9 +167,30 @@ const updateFeaturedService = async (
   return updatedEvent;
 };
 
+const getAllPaymentsService = async () => {
+  const result = await prisma.payments.findMany({
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      transactionId: true,
+      invoiceUrl: true,
+      eventId: true,
+      userId: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return result;
+};
+
 export const adminService = {
   deleteUserService,
   banUserService,
   updateRoleService,
   updateFeaturedService,
+  getAllPaymentsService,
 };

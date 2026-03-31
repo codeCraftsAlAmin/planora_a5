@@ -78,6 +78,12 @@ const getMyEventsService = async (user: IRequestUserInterface) => {
   const result = await prisma.events.findMany({
     where: {
       organizerId: userData.id,
+      isDeleted: false,
+    },
+    include: {
+      reviews: {
+        where: { isDeleted: false },
+      },
     },
   });
 

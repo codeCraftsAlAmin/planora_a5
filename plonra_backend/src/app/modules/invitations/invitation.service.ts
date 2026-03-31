@@ -299,7 +299,6 @@ const rejectInvitation = async (
   user: IRequestUserInterface,
   eventId: string,
 ) => {
-
   const invitation = await prisma.invitations.findUnique({
     where: {
       eventId_inviteeId: {
@@ -380,9 +379,36 @@ const deleteExpiredInvitations = async () => {
   return result;
 };
 
+const getAllInvitations = async () => {
+  const result = await prisma.invitations.findMany({
+    select: {
+      id: true,
+      status: true,
+      createdAt: true,
+      event: {
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          time: true,
+          venue: true,
+          fee: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return result;
+};
+
 export const invitationService = {
   sendInvitation,
   acceptInvitation,
   rejectInvitation,
   deleteExpiredInvitations,
+  getAllInvitations,
 };

@@ -46,8 +46,19 @@ const rejectInvitation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllInvitations = catchAsync(async (req: Request, res: Response) => {
+  const result = await invitationService.getAllInvitations();
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "Invitations fetched successfully",
+    data: result,
+  });
+});
+
 export const invitationController = {
   sendInvitation,
   acceptInvitation,
   rejectInvitation,
+  getAllInvitations,
 };

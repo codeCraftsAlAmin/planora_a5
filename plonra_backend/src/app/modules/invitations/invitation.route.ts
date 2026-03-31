@@ -22,4 +22,7 @@ router.post(
   invitationController.rejectInvitation,
 );
 
+// get all invitaions
+router.get("/", checkAuth(Role.ADMIN), invitationController.getAllInvitations);
+
 export const invitationRouter: Router = router;
