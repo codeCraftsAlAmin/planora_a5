@@ -1,65 +1,116 @@
-import Image from "next/image";
+import { EventCard } from "@/components/shared/event-card";
+import { MainWrapper } from "@/components/shared/main-wrapper";
+import { ButtonLink } from "@/components/ui/button";
+import {
+  Card,
+  CardBadge,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { mockEvents } from "@/lib/mock-events";
 
 export default function Home() {
+  const featuredEvent = mockEvents[0];
+  const upcomingEvents = mockEvents.slice(1, 4);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="pb-16 pt-8 sm:pt-12">
+      <MainWrapper className="space-y-8">
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[36px] border border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,250,240,0.76))] p-8 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:p-10 lg:p-14">
+            <CardBadge>Featured event</CardBadge>
+            <div className="mt-6 max-w-2xl space-y-5">
+              <h1 className="font-serif text-5xl leading-none tracking-tight text-[var(--color-surface-950)] sm:text-6xl">
+                {featuredEvent.title}
+              </h1>
+              <p className="max-w-xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
+                {featuredEvent.shortDescription}
+              </p>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <HeroStat label="Date" value={featuredEvent.dateLabel} />
+              <HeroStat label="Organizer" value={featuredEvent.organizer} />
+              <HeroStat label="Fee" value={featuredEvent.feeLabel} />
+            </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href={`/events/${featuredEvent.slug}`} size="lg">
+                View event
+              </ButtonLink>
+              <ButtonLink href="/events" variant="outline" size="lg">
+                Browse all events
+              </ButtonLink>
+            </div>
+          </div>
+
+          <Card className="overflow-hidden bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
+            <CardHeader>
+              <CardBadge className="bg-white/12 text-white">Discovery</CardBadge>
+              <CardTitle className="text-white">Why attendees join</CardTitle>
+              <CardDescription className="text-white/70">
+                Planora helps visitors understand value before they commit.
+              </CardDescription>
+            </CardHeader>
+            <div className="space-y-4 p-6">
+              {[
+                "Quick browse by title, organizer, category, and status",
+                "Transparent pricing with free vs paid badges",
+                "Member progress so full events stand out instantly",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[24px] border border-white/10 bg-white/8 px-4 py-4 text-sm leading-7 text-white/78"
+                >
+                  {item}
+                </div>
+              ))}
+              <ButtonLink href="/register" variant="secondary" className="w-full">
+                Create your account
+              </ButtonLink>
+            </div>
+          </Card>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
+                Upcoming public events
+              </h2>
+              <p className="text-sm text-[var(--color-copy-muted)]">
+                A quick preview of what visitors can explore right now.
+              </p>
+            </div>
+            <ButtonLink href="/events" variant="ghost">
+              See all events
+            </ButtonLink>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {upcomingEvents.map((event) => (
+              <EventCard key={event.id} event={event} compact />
+            ))}
+          </div>
+        </section>
+      </MainWrapper>
+    </div>
+  );
+}
+
+function HeroStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[24px] border border-[var(--color-border)] bg-white/70 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-copy-muted)]">
+        {label}
+      </p>
+      <p className="mt-2 text-base font-semibold text-[var(--color-surface-950)]">
+        {value}
+      </p>
     </div>
   );
 }
