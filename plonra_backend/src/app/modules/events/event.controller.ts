@@ -49,6 +49,7 @@ const deleteEventController = catchAsync(
       ok: true,
       statusCode: status.OK,
       message: "Event deleted successfully",
+      data: result,
     });
   },
 );

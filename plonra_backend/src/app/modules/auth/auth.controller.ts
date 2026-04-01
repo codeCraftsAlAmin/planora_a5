@@ -142,6 +142,13 @@ const verifyEmailController = catchAsync(
   async (req: Request, res: Response) => {
     const result = await authService.verifyEmailService(req.body);
 
+    if (!result || !result.user) {
+      throw new AppError(status.INTERNAL_SERVER_ERROR, "Verification failed");
+    }
+
+    // set better auth token to cookie
+    tokenHelpers.setBetterAuthSessionCookie(res, result.token as string);
+
     sendResponse(res, {
       statusCode: status.OK,
       ok: true,

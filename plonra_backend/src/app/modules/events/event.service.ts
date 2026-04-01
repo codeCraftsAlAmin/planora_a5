@@ -84,7 +84,7 @@ const getMyEventsService = async (user: IRequestUserInterface) => {
       reviews: {
         where: { isDeleted: false },
       },
-    },
+    }
   });
 
   return result;
@@ -142,6 +142,10 @@ const deleteEventService = async (user: IRequestUserInterface, id: string) => {
     data: {
       isDeleted: true,
       status: EventStatus.CANCELLED,
+    },
+    select: {
+      id: true,
+      title: true,
     },
   });
 

@@ -14,7 +14,7 @@ import { prisma } from "../../lib/prisma";
 import { jwtHelpers } from "../../utils/jwt";
 import { envVars } from "../../config/env";
 import { JwtPayload } from "jsonwebtoken";
-import { IRequestUserInterface } from "../../interface/requestUserInterface";
+
 
 const signUpService = async (payload: ISignUpEmail) => {
   const { name, email, password } = payload;
@@ -65,14 +65,13 @@ const signUpService = async (payload: ISignUpEmail) => {
       refreshToken,
     };
   } catch (error) {
-    if (!(error instanceof AppError)) {
-      await prisma.user.delete({
-        where: {
-          email: payload.email,
-        },
-      });
-    }
-
+    // if (!(error instanceof AppError)) {
+    //   await prisma.user.delete({
+    //     where: {
+    //       email: payload.email,
+    //     },
+    //   });
+    // }
     throw error;
   }
 };
@@ -264,7 +263,7 @@ const verifyEmailService = async (payload: IVerifyEmail) => {
       otp,
     },
   });
-
+  
   return result;
 };
 

@@ -299,7 +299,18 @@ const getAllEventRegistrationsService = async (user: IRequestUserInterface) => {
         userId: user.userId,
       },
       include: {
-        event: true,
+        event: {
+          select: {
+            id: true,
+            title: true,
+            date: true,
+            time: true,
+            venue: true,
+            fee: true,
+            type: true,
+            totalMembers: true,
+          },
+        },
       },
     });
   }

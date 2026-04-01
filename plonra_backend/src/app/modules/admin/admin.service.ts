@@ -43,6 +43,12 @@ const deleteUserService = async (id: string, user: IRequestUserInterface) => {
         deletedAt: new Date(),
         status: UserStatus.DELETED,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
     });
 
     await tx.session.deleteMany({
@@ -131,6 +137,13 @@ const updateRoleService = async (role: Role, id: string) => {
   const updatedUser = await prisma.user.update({
     where: { id: userData.id },
     data: { role },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+    },
   });
 
   return updatedUser;
@@ -162,6 +175,11 @@ const updateFeaturedService = async (
   const updatedEvent = await prisma.events.update({
     where: { id: eventData.id },
     data: { isFeatured: payload.isFeatured },
+    select: {
+      id: true,
+      title: true,
+      isFeatured: true,
+    },
   });
 
   return updatedEvent;

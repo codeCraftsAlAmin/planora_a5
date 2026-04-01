@@ -18,7 +18,18 @@ const getMyProfileService = async (user: IRequestUserInterface) => {
     where: {
       id: user.userId,
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      address: true,
+      phone: true,
+      bio: true,
+      role: true,
+      status: true,
+      gender: true,
+      image: true,
+      emailVerified: true,
       events: true,
       invitationsSent: true,
       invitationsRecieved: true,
@@ -80,6 +91,13 @@ const becomeHostService = async (user: IRequestUserInterface) => {
   const updatedUser = await prisma.user.update({
     where: { id: user.userId },
     data: { role: Role.HOST },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+    },
   });
 
   return updatedUser;
