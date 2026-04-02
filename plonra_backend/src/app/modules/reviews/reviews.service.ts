@@ -1,15 +1,16 @@
 import { ICreateReview } from "./reviews.interface";
 import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { prisma } from "../../lib/prisma";
-import { NotificationType, UserStatus } from "../../../generated/prisma/enums";
+import { NotificationType, Role, UserStatus } from "../../../generated/prisma/enums";
 import AppError from "../../middleware/appError";
 import status from "http-status";
 
 const createReview = async (
   user: IRequestUserInterface,
   payload: ICreateReview,
+  eventId: string
 ) => {
-  const { eventId, comment, rating, parentId } = payload;
+  const { comment, rating } = payload;
 
   // find event
   const event = await prisma.events.findUnique({
@@ -69,7 +70,6 @@ const createReview = async (
       comment,
       rating,
       userId: user.userId,
-      parentId: parentId || null,
     },
   });
 
@@ -214,9 +214,62 @@ const deleteComment = async (user: IRequestUserInterface, id: string) => {
   return result;
 };
 
+const replyComment = async (
+  user: IRequestUserInterface,
+  comment: string,
+  id: string,
+) => {
+  const existingReview = await prisma.reviews.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      event: {
+        select: {
+          organizerId: true,
+        },
+      },
+    },
+  });
+
+  if (!existingReview) {
+    throw new AppError(status.NOT_FOUND, "Review not found");
+  }
+
+
+  console.log("user" , user)
+
+  if (user.role === Role.HOST && existingReview.event.organizerId !== user.userId) {
+    throw new AppError(
+      status.FORBIDDEN,
+      "You are not authorized to reply to this review",
+    );
+  }
+
+  const result = await prisma.reviews.create({
+    data: {
+      eventId: existingReview.eventId,
+      comment,
+      userId: user.userId,
+      parentId: id,
+    },
+    select: {
+      id: true,
+      comment: true,
+      createdAt: true,
+      user: {
+        select: { name: true, role: true },
+      },
+    },
+  });
+
+  return result;
+};
+
 export const reviewsService = {
   createReview,
   getAllReviews,
   updateComment,
   deleteComment,
+  replyComment,
 };

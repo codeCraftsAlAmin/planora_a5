@@ -6,9 +6,9 @@ import { sendResponse } from "../../shared/sendResponse";
 
 const createReview = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
-  const payload = req.body;
+  const { id } = req.params;
 
-  const result = await reviewsService.createReview(user!, payload);
+  const result = await reviewsService.createReview(user!, req.body, id as string);
   sendResponse(res, {
     ok: true,
     statusCode: status.CREATED,
@@ -57,9 +57,28 @@ const deleteComment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const replyComment = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const comment = req.body.comment;
+  const { id } = req.params;
+
+  const result = await reviewsService.replyComment(
+    user!,
+    comment,
+    id as string,
+  );
+  sendResponse(res, {
+    ok: true,
+    statusCode: status.OK,
+    message: "Review replied successfully",
+    data: result,
+  });
+});
+
 export const reviewsController = {
   createReview,
   getAllReviews,
   updateComment,
   deleteComment,
+  replyComment,
 };

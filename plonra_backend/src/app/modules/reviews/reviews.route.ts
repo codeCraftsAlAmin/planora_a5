@@ -7,7 +7,7 @@ const router = express.Router();
 
 // create review
 router.post(
-  "/create",
+  "/create/:id",
   checkAuth(Role.USER, Role.HOST, Role.ADMIN),
   reviewsController.createReview,
 );
@@ -27,6 +27,13 @@ router.delete(
   "/delete/:id",
   checkAuth(Role.USER, Role.HOST, Role.ADMIN),
   reviewsController.deleteComment,
+);
+
+// reply comment
+router.post(
+  "/reply/:id",
+  checkAuth(Role.USER, Role.HOST),
+  reviewsController.replyComment,
 );
 
 export const reviewsRouter = router;
