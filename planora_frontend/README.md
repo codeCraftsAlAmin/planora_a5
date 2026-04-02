@@ -2,16 +2,20 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Before starting the frontend, make sure the local backend proxy target is configured:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+echo NEXT_PUBLIC_BACKEND_URL=http://localhost:5000 > .env
+```
+
+`next.config.ts` uses `NEXT_PUBLIC_BACKEND_URL` to proxy `/api/*` requests to the backend. If this variable is missing, frontend requests like `/api/v1/auth/sign-in/email` and `/api/v1/users/my-profile` will hit Next.js on port `3000` instead of the backend and return `404`.
+
+After creating or changing `.env`, restart the frontend dev server so Next.js reloads the rewrite configuration.
+
+Then run the development server:
+
+```bash
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

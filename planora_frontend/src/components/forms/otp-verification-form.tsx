@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AuthShell } from "@/components/forms/auth-shell";
 import { Button } from "@/components/ui/button";
 import { InputOtp } from "@/components/ui/input-otp";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/api-service";
+
 
 const otpSchema = z.object({
   code: z.string().length(6, "Enter the full 6-digit code."),
@@ -15,8 +19,15 @@ const otpSchema = z.object({
 
 type OtpFormValues = z.infer<typeof otpSchema>;
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Please try again later.";
+}
+
 export function OtpVerificationForm() {
   const { showToast } = useToast();
+  const { refetch } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [secondsLeft, setSecondsLeft] = useState(30);
   const {
     control,
@@ -47,24 +58,87 @@ export function OtpVerificationForm() {
     return () => window.clearTimeout(timeout);
   }, [secondsLeft]);
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 700));
+  const email = searchParams.get("email");
 
-    showToast({
-      title: "OTP code accepted",
-      description: "This verification screen is ready for backend confirmation.",
-      variant: "success",
-    });
+  const onSubmit = async (values: OtpFormValues) => {
+    if (!email) {
+      showToast({
+        title: "Missing email",
+        description: "Please go back to the registration page and try again.",
+        variant: "error",
+      });
+      return;
+    }
+
+    try {
+      const response = await authService.verifyOtp({
+        email,
+        otp: values.code,
+      });
+
+      if (!response.ok) {
+        showToast({
+          title: "Verification failed",
+          description: response.message || "Invalid OTP code.",
+          variant: "error",
+        });
+        return;
+      }
+
+      await refetch();
+
+      showToast({
+        title: "Email verified!",
+        description: response.message || "You have successfully verified your email.",
+        variant: "success",
+      });
+      
+      // Redirect to dashboard or login
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      showToast({
+        title: "Something went wrong",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
   };
 
-  const handleResend = () => {
-    setSecondsLeft(30);
-    setValue("code", "", { shouldValidate: false });
-    showToast({
-      title: "Code resent",
-      description: "A fresh OTP has been requested in the UI flow.",
-    });
+  const handleResend = async () => {
+    if (!email) return;
+
+    try {
+      const response = await authService.resendOtp({
+        email,
+        type: "email-verification",
+      });
+
+      if (!response.ok) {
+        showToast({
+          title: "Resend failed",
+          description: response.message || "Could not resend code.",
+          variant: "error",
+        });
+        return;
+      }
+
+      setSecondsLeft(30);
+      setValue("code", "", { shouldValidate: false });
+      showToast({
+        title: "Code resent",
+        description: response.message || "A fresh OTP has been sent to your email.",
+        variant: "success",
+      });
+    } catch (err: unknown) {
+      showToast({
+        title: "Error resending code",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
   };
+
+
 
   return (
     <AuthShell

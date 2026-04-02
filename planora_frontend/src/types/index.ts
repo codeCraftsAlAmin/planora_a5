@@ -5,7 +5,13 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  phone?: string;
+  address?: string;
+  bio?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  image?: string;
 }
+
 
 export interface ToastMessage {
   id: string;

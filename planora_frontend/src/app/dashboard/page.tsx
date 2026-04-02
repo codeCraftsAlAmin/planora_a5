@@ -19,15 +19,8 @@ import {
   userRegisteredEvents,
 } from "@/lib/mock-dashboard";
 
-const demoUser = {
-  id: "demo-user",
-  name: "Ava Rahman",
-  email: "ava@planora.app",
-  role: "user" as const,
-};
-
 export default function DashboardPage() {
-  const { user, isAuthenticated, isHydrated, setDemoUser } = useAuth();
+  const { user, isAuthenticated, isPending } = useAuth();
   const { showToast } = useToast();
   const [registrations, setRegistrations] = useState(hostRegistrations);
 
@@ -39,15 +32,6 @@ export default function DashboardPage() {
       ).length,
     [registrations]
   );
-
-  const handleDemoLogin = () => {
-    setDemoUser(demoUser);
-    showToast({
-      title: "Demo dashboard ready",
-      description: "You are now viewing the attendee control center.",
-      variant: "success",
-    });
-  };
 
   const handleDecision = (registrationId: string, nextStatus: "Approved" | "Rejected") => {
     setRegistrations((current) =>
@@ -78,13 +62,15 @@ export default function DashboardPage() {
                   : "Your event home for registrations, updates, and next steps."}
               </h1>
               <p className="max-w-xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
-                {isHydrated && isAuthenticated && user
+                {isPending
+                  ? "Checking your account and loading the private workspace."
+                  : isAuthenticated && user
                   ? `Signed in as ${user.name}. The dashboard layout adapts to your ${user.role} role.`
-                  : "Sign into the demo account to preview the attendee dashboard, then upgrade from the profile screen when you want to explore the host workspace."}
+                  : "Sign in to access your private workspace. Once authenticated, this screen will route you into the attendee or host dashboard automatically."}
               </p>
             </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {isHydrated && isAuthenticated ? (
+              {isAuthenticated ? (
                 <>
                   <ButtonLink href="/profile" size="lg">
                     Open profile
@@ -95,11 +81,11 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <Button onClick={handleDemoLogin} size="lg">
-                    Enter as attendee
-                  </Button>
-                  <ButtonLink href="/profile" variant="outline" size="lg">
-                    Preview host upgrade
+                  <ButtonLink href="/login" size="lg">
+                    Go to login
+                  </ButtonLink>
+                  <ButtonLink href="/register" variant="outline" size="lg">
+                    Create account
                   </ButtonLink>
                 </>
               )}

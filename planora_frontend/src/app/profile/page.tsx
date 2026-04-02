@@ -1,7 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardBadge,
@@ -11,101 +16,264 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/api-service";
 
-const defaultUser = {
-  id: "demo-user",
-  name: "Ava Rahman",
-  email: "ava@planora.app",
-  role: "user" as const,
-};
+const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  bio: z.string().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong.";
+}
 
 export default function ProfilePage() {
-  const { user, setDemoUser } = useAuth();
+  const { user, refetch } = useAuth();
   const { showToast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const currentUser = user ?? defaultUser;
-  const isHost = currentUser.role === "host";
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    values: {
+      name: user?.name || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+      bio: user?.bio || "",
+      gender: user?.gender || "OTHER",
+    },
+  });
 
-  const handleBecomeHost = () => {
-    setDemoUser({ ...currentUser, role: "host" });
-    showToast({
-      title: "Host mode enabled",
-      description: "Your profile has been upgraded for the dashboard demo.",
-      variant: "success",
-    });
+  if (!user) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <p className="text-lg text-[var(--color-copy-muted)]">Please sign in to view your profile.</p>
+      </div>
+    );
+  }
+
+  const isHost = user.role === "host";
+
+  const handleBecomeHost = async () => {
+    try {
+      const response = await authService.becomeHost();
+      if (response.ok) {
+        showToast({
+          title: "Successfully upgraded!",
+          description: "You are now a host. Welcome to the creator community!",
+          variant: "success",
+        });
+        await refetch();
+      }
+    } catch (err: unknown) {
+      showToast({
+        title: "Upgrade failed",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
+  };
+
+  const onUpdateProfile = async (values: ProfileFormValues) => {
+    try {
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+      
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      const response = await authService.updateProfile(formData);
+      if (response.ok) {
+        showToast({
+          title: "Profile updated",
+          description: "Your changes have been saved successfully.",
+          variant: "success",
+        });
+        setIsEditing(false);
+        await refetch();
+      }
+    } catch (err: unknown) {
+      showToast({
+        title: "Update failed",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
   };
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
       <MainWrapper className="space-y-8">
-        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[36px] border border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(248,213,126,0.18),rgba(255,255,255,0.9))] p-8 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:p-10 lg:p-12">
-            <CardBadge>Profile</CardBadge>
-            <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-18 w-18 items-center justify-center rounded-[28px] bg-[var(--color-brand-100)] text-3xl font-bold text-[var(--color-brand-700)]">
-                  {currentUser.name.charAt(0)}
-                </div>
-                <div>
-                  <h1 className="font-serif text-4xl tracking-tight text-[var(--color-surface-950)]">
-                    {currentUser.name}
-                  </h1>
-                  <p className="mt-2 text-sm uppercase tracking-[0.22em] text-[var(--color-copy-muted)]">
-                    {currentUser.role}
-                  </p>
-                  <p className="mt-3 text-sm text-[var(--color-copy)]">
-                    {currentUser.email}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-[24px] border border-[var(--color-border)] bg-white/80 px-5 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-copy-muted)]">
-                  Account status
-                </p>
-                <p className="mt-2 text-lg font-semibold text-[var(--color-surface-950)]">
-                  {isHost ? "Host access active" : "Attendee access active"}
-                </p>
-              </div>
+            <div className="flex items-center justify-between">
+              <CardBadge>Personal Profile</CardBadge>
+              <Button 
+                variant={isEditing ? "outline" : "secondary"} 
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                {isEditing ? "Cancel editing" : "Edit profile"}
+              </Button>
             </div>
-            <p className="mt-8 max-w-2xl text-base leading-8 text-[var(--color-copy)]">
-              This profile page is where a regular user can upgrade into hosting mode.
-              The transition is framed like a clear next step instead of a buried account
-              setting, which makes the path easier to discover.
-            </p>
+
+            {isEditing ? (
+              <form onSubmit={handleSubmit(onUpdateProfile)} className="mt-8 space-y-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Name</label>
+                    <Input {...register("name")} />
+                    {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Phone</label>
+                    <Input {...register("phone")} placeholder="+1 234 567 890" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Bio</label>
+                  <textarea 
+                    {...register("bio")}
+                    className="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]"
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Address</label>
+                    <Input {...register("address")} placeholder="City, Country" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Gender</label>
+                    <select 
+                      {...register("gender")}
+                      className="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]"
+                    >
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Profile Picture</label>
+                  <div className="flex items-center gap-4">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      className="text-sm text-[var(--color-copy-muted)]"
+                    />
+                    {selectedFile && (
+                      <span className="text-xs text-[var(--color-brand-600)] font-medium">
+                        {selectedFile.name} selected
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving changes..." : "Save profile changes"}
+                </Button>
+              </form>
+            ) : (
+              <>
+                <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
+                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-white bg-[var(--color-brand-100)] shadow-lg">
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-[var(--color-brand-700)]">
+                        {user.name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h1 className="font-serif text-4xl tracking-tight text-[var(--color-surface-950)]">
+                      {user.name}
+                    </h1>
+                    <p className="mt-2 text-sm uppercase tracking-[0.22em] text-[var(--color-copy-muted)]">
+                      {user.role} • {user.gender || "Not specified"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-10 grid gap-8 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-copy-muted)]">Email address</p>
+                    <p className="text-base text-[var(--color-surface-950)] font-medium">{user.email}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-copy-muted)]">Phone number</p>
+                    <p className="text-base text-[var(--color-surface-950)] font-medium">{user.phone || "Not provided"}</p>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-copy-muted)]">Location</p>
+                    <p className="text-base text-[var(--color-surface-950)] font-medium">{user.address || "No address added yet"}</p>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-copy-muted)]">About me</p>
+                    <p className="text-sm leading-7 text-[var(--color-copy)] italic">
+                      {user.bio || "Write a short bio to introduce yourself to others in the community."}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
-          <Card className="bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
-            <CardHeader>
-              <CardBadge className="bg-white/12 text-white">Host program</CardBadge>
-              <CardTitle className="text-white">Become a Host</CardTitle>
-              <CardDescription className="text-white/70">
-                Launch private or public events and manage attendees from your own workspace.
-              </CardDescription>
-            </CardHeader>
-            <div className="mt-6 space-y-4">
-              {[
-                "Create branded event pages with public or private visibility.",
-                "Approve or reject requests for invite-only experiences.",
-                "Track registrations and revenue from a single dashboard.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[24px] border border-white/10 bg-white/8 px-4 py-4 text-sm leading-7 text-white/78"
-                >
-                  {item}
-                </div>
-              ))}
+          <Card className="flex flex-col justify-between bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
+            <div>
+              <CardHeader>
+                <CardBadge className="bg-white/12 text-white border-white/20">Host program</CardBadge>
+                <CardTitle className="text-white text-3xl mt-2">Become a Host</CardTitle>
+                <CardDescription className="text-white/70 text-base mt-2">
+                  Launch private or public events and manage attendees from your own workspace.
+                </CardDescription>
+              </CardHeader>
+              <div className="mt-8 space-y-4">
+                {[
+                  "Create branded event pages with public or private visibility.",
+                  "Approve or reject requests for invite-only experiences.",
+                  "Track registrations and revenue from a single dashboard.",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white/78"
+                  >
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand-400)] shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-8">
+            <div className="mt-12">
               <Button
                 onClick={handleBecomeHost}
                 variant={isHost ? "outline" : "secondary"}
                 size="lg"
-                className={isHost ? "border-white/25 bg-white/10 text-white hover:bg-white/16" : "w-full"}
+                className={isHost ? "border-white/25 bg-white/10 text-white hover:bg-white/16 shadow-none" : "w-full shadow-xl shadow-black/10"}
                 fullWidth={!isHost}
                 disabled={isHost}
               >
-                {isHost ? "You are already a host" : "Become a Host"}
+                {isHost ? "Host access active" : "Upgrade to Host Mode"}
               </Button>
             </div>
           </Card>
@@ -116,21 +284,21 @@ export default function ProfilePage() {
             {
               label: "Current role",
               value: isHost ? "Host" : "User",
-              detail: "Drives which dashboard modules are shown privately.",
+              detail: "Determines which dashboard modules are accessible.",
             },
             {
               label: "Next unlock",
               value: isHost ? "Management tools" : "Host dashboard",
-              detail: "Approve private attendees and monitor event performance.",
+              detail: "Approve invitees and monitor session performance.",
             },
             {
-              label: "Recommended path",
-              value: isHost ? "Open dashboard" : "Upgrade account",
-              detail: "A simple call-to-action keeps the conversion path visible.",
+              label: "Recommended",
+              value: isHost ? "Open dashboard" : "Setup profile",
+              detail: "Complete your details to build trust with hosts.",
             },
           ].map((item) => (
-            <Card key={item.label}>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-copy-muted)]">
+            <Card key={item.label} className="border-white/40 bg-white/40 backdrop-blur-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--color-copy-muted)]">
                 {item.label}
               </p>
               <p className="mt-5 font-serif text-3xl text-[var(--color-surface-950)]">

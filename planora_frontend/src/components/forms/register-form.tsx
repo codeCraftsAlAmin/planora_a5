@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,20 +9,24 @@ import { AuthShell } from "@/components/forms/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/api-service";
+
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.email("Enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
-  gender: z.enum(["male", "female", "other"], {
-    error: "Please select a gender.",
-  }),
+  email: z.string().email("Enter a valid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Please try again later.";
+}
+
 export function RegisterForm() {
   const { showToast } = useToast();
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -32,19 +37,40 @@ export function RegisterForm() {
       name: "",
       email: "",
       password: "",
-      gender: "male",
     },
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
-    await new Promise((resolve) => window.setTimeout(resolve, 800));
+    try {
+      const response = await authService.signUp(values);
 
-    showToast({
-      title: "Registration UI validated",
-      description: `${values.name} is ready for backend signup integration.`,
-      variant: "success",
-    });
+      if (!response.ok) {
+        showToast({
+          title: "Registration failed",
+          description: response.message || "Something went wrong.",
+          variant: "error",
+        });
+        return;
+      }
+
+      showToast({
+        title: "Account created!",
+        description: response.message || "Please check your email for the verification OTP.",
+        variant: "success",
+      });
+
+      
+      // Redirect to verify-otp page with email in query param
+      router.push(`/verify-otp?email=${encodeURIComponent(values.email)}`);
+    } catch (err: unknown) {
+      showToast({
+        title: "Something went wrong",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
   };
+
 
   return (
     <AuthShell
@@ -67,21 +93,13 @@ export function RegisterForm() {
         <FormField label="Password" error={errors.password?.message}>
           <Input
             type="password"
-            placeholder="Minimum 8 characters"
+            placeholder="Minimum 6 characters"
             {...register("password")}
           />
         </FormField>
 
-        <FormField label="Gender" error={errors.gender?.message}>
-          <select
-            className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
-            {...register("gender")}
-          >
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </FormField>
+
+
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create account"}

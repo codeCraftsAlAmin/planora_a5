@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/shared/logo";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/api-service";
+
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -15,34 +18,35 @@ const navItems = [
   { href: "/profile", label: "Profile" },
 ];
 
-const demoUser = {
-  id: "demo-user",
-  name: "Ava Rahman",
-  email: "ava@planora.app",
-  role: "user" as const,
-};
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Please try again later.";
+}
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isAuthenticated, isHydrated, setDemoUser } = useAuth();
+  const { user, isAuthenticated, isPending, refetch } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
 
-  const handleDemoLogin = () => {
-    setDemoUser(demoUser);
-    showToast({
-      title: "Demo session ready",
-      description: "Navbar switched to the signed-in state for shell testing.",
-      variant: "success",
-    });
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      await refetch();
+      showToast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      router.push("/");
+    } catch (err: unknown) {
+      showToast({
+        title: "Logout failed",
+        description: getErrorMessage(err),
+        variant: "error",
+      });
+    }
   };
 
-  const handleLogout = () => {
-    setDemoUser(null);
-    showToast({
-      title: "Signed out",
-      description: "Demo auth state has been cleared.",
-    });
-  };
+
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/60 bg-[rgba(245,241,234,0.8)] backdrop-blur-xl">
@@ -63,12 +67,20 @@ export function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            {isHydrated && isAuthenticated && user ? (
+            {!isPending && isAuthenticated && user ? (
+
               <>
                 <div className="flex items-center gap-3 rounded-full border border-[var(--color-border)] bg-white/90 px-3 py-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand-100)] text-sm font-bold text-[var(--color-brand-700)]">
-                    {user.name.charAt(0)}
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-brand-100)] shadow-sm">
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[var(--color-brand-700)]">
+                        {user.name.charAt(0)}
+                      </div>
+                    )}
                   </div>
+
                   <div className="pr-2">
                     <p className="text-sm font-semibold text-[var(--color-surface-950)]">
                       {user.name}
@@ -87,9 +99,10 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={handleDemoLogin}>
+                <ButtonLink href="/login" variant="ghost" size="sm">
                   Login
-                </Button>
+                </ButtonLink>
+
                 <ButtonLink href="/register" variant="primary" size="sm">
                   Register
                 </ButtonLink>
@@ -126,7 +139,8 @@ export function Navbar() {
               ))}
             </nav>
             <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4">
-              {isHydrated && isAuthenticated && user ? (
+              {!isPending && isAuthenticated && user ? (
+
                 <>
                   <div className="rounded-2xl bg-[var(--color-surface-100)] px-4 py-3">
                     <p className="text-sm font-semibold text-[var(--color-surface-950)]">
@@ -145,9 +159,10 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Button onClick={handleDemoLogin} variant="ghost" fullWidth>
+                  <ButtonLink href="/login" variant="ghost" fullWidth>
                     Login
-                  </Button>
+                  </ButtonLink>
+
                   <ButtonLink href="/register" fullWidth>
                     Register
                   </ButtonLink>
