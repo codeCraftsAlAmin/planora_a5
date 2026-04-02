@@ -59,19 +59,29 @@ export function CardContent({
 
 export function CardBadge({
   className,
+  variant = "default",
   children,
-}: {
-  className?: string;
-  children: ReactNode;
+  ...props
+}: HTMLAttributes<HTMLSpanElement> & {
+  variant?: "default" | "secondary" | "outline";
 }) {
+  const variantStyles = {
+    default: "bg-[var(--color-brand-100)] text-[var(--color-brand-700)]",
+    secondary: "bg-[var(--color-surface-100)] text-[var(--color-surface-950)]",
+    outline: "border border-[var(--color-border)] bg-transparent text-[var(--color-copy-muted)]",
+  };
+
   return (
     <span
       className={cn(
-        "inline-flex rounded-full bg-[var(--color-brand-100)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-700)]",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]",
+        variantStyles[variant],
         className
       )}
+      {...props}
     >
       {children}
     </span>
   );
 }
+
