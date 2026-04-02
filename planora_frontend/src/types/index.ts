@@ -10,6 +10,7 @@ export interface AuthUser {
   bio?: string;
   gender?: "MALE" | "FEMALE" | "OTHER";
   image?: string;
+  emailVerified?: boolean;
 }
 
 
@@ -29,6 +30,8 @@ export type EventCategory =
   | "community"
   | "education"
   | "creative";
+
+import { Review } from "@/lib/api-service";
 
 export interface EventItem {
   id: string;
@@ -53,7 +56,7 @@ export interface EventItem {
   organizerEmail?: string;
   organizerId?: string;
   organizerImage?: string;
-  reviews?: any[];
+  reviews?: Review[];
   totalRegistrations?: number;
   registrations?: any[];
 }

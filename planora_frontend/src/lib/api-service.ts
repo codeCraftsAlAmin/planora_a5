@@ -159,8 +159,31 @@ export interface BackendEvent {
     image: string | null;
     bio: string | null;
   };
-  reviews?: any[];
+  reviews?: Review[];
   eventsRegistrations?: any[];
+}
+
+export interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  userId: string;
+  eventId: string;
+  user?: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+  replies?: Array<{
+    id: string;
+    comment: string;
+    createdAt: string;
+    user: {
+      name: string;
+      role: string;
+    };
+  }>;
 }
 
 export function mapBackendEventToFrontend(event: BackendEvent): import("@/types").EventItem {
@@ -247,4 +270,20 @@ export const eventRegisterService = {
   }),
 
   getMyRegistrations: () => apiFetch<any[]>("/event-register"),
+};
+
+export const reviewsService = {
+  createReview: (eventId: string, data: { comment: string; rating?: number }) =>
+    apiFetch<Review>(`/reviews/create/${eventId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  replyComment: (parentId: string, comment: string) =>
+    apiFetch<Review>(`/reviews/reply/${parentId}`, {
+      method: "POST",
+      body: JSON.stringify({ comment }),
+    }),
+
+  getAllReviews: () => apiFetch<Review[]>("/reviews"),
 };

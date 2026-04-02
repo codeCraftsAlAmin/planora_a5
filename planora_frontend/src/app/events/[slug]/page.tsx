@@ -10,6 +10,7 @@ import { authService, eventService, mapBackendEventToFrontend } from "@/lib/api-
 import type { EventItem, AuthUser } from "@/types";
 import { JoinButton } from "@/components/events/join-button";
 import { cn } from "@/lib/utils";
+import { CommentSection } from "@/components/events/comment-section";
 
 export default function EventDetailsPage({
   params,
@@ -202,6 +203,17 @@ export default function EventDetailsPage({
               </div>
             </Card>
           </div>
+        </section>
+
+        <section className="mt-8">
+          <CommentSection
+            eventId={event.id}
+            initialReviews={event.reviews || []}
+            isLoggedIn={!!user}
+            userVerified={user?.emailVerified || false}
+            userId={user?.id}
+            organizerId={event.organizerId || ""}
+          />
         </section>
       </MainWrapper>
     </div>
