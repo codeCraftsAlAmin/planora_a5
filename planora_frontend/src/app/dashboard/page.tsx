@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Button, ButtonLink } from "@/components/ui/button";
 import {
@@ -14,15 +14,53 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   hostRegistrations,
-  hostStats,
   userNotifications,
   userRegisteredEvents,
 } from "@/lib/mock-dashboard";
+import { eventService } from "@/lib/api-service";
+import type { EventItem } from "@/types";
+import { mapBackendEventToFrontend } from "@/lib/api-service";
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isPending } = useAuth();
   const { showToast } = useToast();
   const [registrations, setRegistrations] = useState(hostRegistrations);
+  const [myEvents, setMyEvents] = useState<EventItem[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "host") {
+      const fetchMyEvents = async () => {
+        try {
+          setIsLoadingEvents(true);
+          const response = await eventService.getMyEvents();
+          if (response.ok && response.data) {
+            setMyEvents(response.data.map(mapBackendEventToFrontend));
+          }
+        } catch (error) {
+          console.error("Failed to fetch host events:", error);
+        } finally {
+          setIsLoadingEvents(false);
+        }
+      };
+      fetchMyEvents();
+    }
+  }, [isAuthenticated, user?.role]);
+
+  const stats = useMemo(() => {
+    if (user?.role !== "host") return [];
+
+    const totalRevenue = myEvents.reduce(
+      (sum, event) => sum + (event.feeType === "paid" ? event.membersJoined * parseInt(event.feeLabel.replace("৳", "")) : 0),
+      0
+    );
+
+    return [
+      { id: "stat-1", label: "Total events", value: myEvents.length.toString(), detail: "Lifetime published" },
+      { id: "stat-2", label: "Total revenue", value: `৳${totalRevenue.toLocaleString()}`, detail: "Net after fees" },
+      { id: "stat-3", label: "Approvals", value: "0", detail: "Pending private requests" }, // Logic for pending approvals can be added later
+    ];
+  }, [user?.role, myEvents]);
 
   const pendingCount = useMemo(
     () =>
@@ -141,7 +179,7 @@ export default function DashboardPage() {
                 </p>
               </div>
               <div className="grid gap-6 md:grid-cols-3">
-                {hostStats.map((stat, index) => (
+                {stats.map((stat, index) => (
                   <Card
                     key={stat.id}
                     className={index === 1 ? "bg-[var(--color-surface-950)] text-white" : ""}

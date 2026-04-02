@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import type { EventItem } from "@/types";
 
 const statusLabels = {
-  open: "Open",
-  limited: "Limited",
-  "closing-soon": "Closing soon",
+  UPCOMING: "Upcoming",
+  ONGOING: "Ongoing",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
 };
 
 export function EventCard({
@@ -23,9 +24,22 @@ export function EventCard({
 
   return (
     <Card className="h-full overflow-hidden p-0">
-      <div className={cn("h-36 bg-gradient-to-br", event.coverTone, compact && "h-28")}>
-        <div className="flex h-full items-start justify-between p-5 text-white">
-          <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]">
+      <div
+        className={cn("relative h-36 bg-gradient-to-br", event.coverTone, compact && "h-28")}
+        style={
+          event.image
+            ? {
+                backgroundImage: `url(${event.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : {}
+        }
+      >
+        {/* Overlay to ensure text readability on images */}
+        {event.image && <div className="absolute inset-0 bg-black/20" />}
+        <div className="relative flex h-full items-start justify-between p-5 text-white">
+          <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] backdrop-blur-sm">
             {event.category}
           </span>
           <div className="flex gap-2">

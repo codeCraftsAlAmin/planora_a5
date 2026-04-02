@@ -20,9 +20,9 @@ export interface ToastMessage {
   variant?: "default" | "success" | "error";
 }
 
-export type EventVisibility = "public" | "private";
+export type EventVisibility = "PUBLIC" | "PRIVATE";
 export type EventFeeType = "free" | "paid";
-export type EventStatus = "open" | "limited" | "closing-soon";
+export type EventStatus = "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
 export type EventCategory =
   | "technology"
   | "business"
@@ -48,4 +48,12 @@ export interface EventItem {
   membersJoined: number;
   membersCapacity: number;
   coverTone: string;
+  image?: string;
+  organizerName: string;
+  organizerEmail?: string;
+  organizerId?: string;
+  organizerImage?: string;
+  reviews?: any[];
+  totalRegistrations?: number;
+  registrations?: any[];
 }

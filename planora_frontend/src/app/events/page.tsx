@@ -1,32 +1,64 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EventCard } from "@/components/shared/event-card";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Input } from "@/components/ui/input";
-import { eventCategories, eventStatuses, mockEvents } from "@/lib/mock-events";
-import type { EventCategory, EventStatus } from "@/types";
+import { eventCategories, eventStatuses } from "@/lib/mock-events"; // Removed mockEvents import
+import type { EventCategory, EventItem, EventStatus, EventVisibility } from "@/types";
+import { eventService, mapBackendEventToFrontend } from "@/lib/api-service";
 
 export default function EventsPage() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [category, setCategory] = useState<EventCategory | "all">("all");
   const [status, setStatus] = useState<EventStatus | "all">("all");
+  const [visibility, setVisibility] = useState<EventVisibility | "all">("all");
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true);
+        const params: Record<string, string | number | boolean | undefined> = {
+          searchTerm: debouncedQuery || undefined,
+          type: visibility === "all" ? undefined : visibility,
+        };
+
+        const response = await eventService.getAllEvents(params);
+        if (response.ok && response.data) {
+          const mappedEvents = response.data.map(mapBackendEventToFrontend);
+          setEvents(mappedEvents);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch events");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [debouncedQuery, visibility]);
 
   const filteredEvents = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return mockEvents.filter((event) => {
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        event.title.toLowerCase().includes(normalizedQuery) ||
-        event.organizer.toLowerCase().includes(normalizedQuery);
-
+    return events.filter((event) => {
       const matchesCategory = category === "all" || event.category === category;
       const matchesStatus = status === "all" || event.status === status;
 
-      return matchesQuery && matchesCategory && matchesStatus;
+      return matchesCategory && matchesStatus;
     });
-  }, [category, query, status]);
+  }, [category, status, events]);
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
@@ -40,24 +72,41 @@ export default function EventsPage() {
               Discover the next event your community actually wants to attend.
             </h1>
             <p className="max-w-2xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
-              Search by title or organizer, then narrow the list by category and
-              availability status. Each card shows pricing and member capacity
-              so visitors can decide fast.
+              Search by title or organizer, then narrow the list by visibility,
+              category, and availability status. Each card shows real data from
+              the Planora gateway.
             </p>
           </div>
         </section>
 
         <section className="rounded-[32px] border border-[var(--color-border)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.8fr]">
+          <div className="grid gap-4 lg:grid-cols-[1fr_0.7fr_0.7fr_0.7fr]">
             <label className="space-y-2">
               <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Search by title or organizer
+                Search
               </span>
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Try Planora, Hackers of Dhaka, Canvas Frontier..."
+                placeholder="Title or organizer..."
               />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
+                Visibility
+              </span>
+              <select
+                value={visibility}
+                onChange={(event) =>
+                  setVisibility(event.target.value as EventVisibility | "all")
+                }
+                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
+              >
+                <option value="all">Any type</option>
+                <option value="PUBLIC">Public</option>
+                <option value="PRIVATE">Private</option>
+              </select>
             </label>
 
             <label className="space-y-2">
@@ -100,36 +149,54 @@ export default function EventsPage() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
-                Public events
-              </h2>
-              <p className="text-sm text-[var(--color-copy-muted)]">
-                {filteredEvents.length} event{filteredEvents.length === 1 ? "" : "s"} match your current filters.
-              </p>
-            </div>
+        {isLoading ? (
+          <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 rounded-[32px] border border-[var(--color-border)] bg-white/50 p-12 text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-brand-200)] border-t-[var(--color-brand-600)]" />
+            <p className="text-sm font-medium text-[var(--color-copy-muted)]">
+              Fetching the latest community events...
+            </p>
           </div>
+        ) : error ? (
+          <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 rounded-[32px] border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-12 text-center">
+            <h3 className="font-serif text-2xl text-[var(--color-danger-copy)]">
+              Something went wrong
+            </h3>
+            <p className="max-w-md text-sm leading-7 text-[var(--color-danger-copy)] opacity-80">
+              {error}. Please check your connection or try again later.
+            </p>
+          </div>
+        ) : (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
+                  Public events
+                </h2>
+                <p className="text-sm text-[var(--color-copy-muted)]">
+                  {filteredEvents.length} event{filteredEvents.length === 1 ? "" : "s"} match your current filters.
+                </p>
+              </div>
+            </div>
 
-          {filteredEvents.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {filteredEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[28px] border border-dashed border-[var(--color-border-strong)] bg-white/70 px-6 py-12 text-center">
-              <h3 className="font-serif text-2xl text-[var(--color-surface-950)]">
-                No events match that search yet
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-copy-muted)]">
-                Try a different keyword or reset the category and status filters
-                to widen the results.
-              </p>
-            </div>
-          )}
-        </section>
+            {filteredEvents.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {filteredEvents.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[28px] border border-dashed border-[var(--color-border-strong)] bg-white/70 px-6 py-12 text-center">
+                <h3 className="font-serif text-2xl text-[var(--color-surface-950)]">
+                  No events match that search yet
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-copy-muted)]">
+                  Try a different keyword or reset the category and status filters
+                  to widen the results.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
       </MainWrapper>
     </div>
   );
