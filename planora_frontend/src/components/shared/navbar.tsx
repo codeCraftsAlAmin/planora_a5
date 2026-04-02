@@ -9,6 +9,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/api-service";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 
 const navItems = [
@@ -68,8 +69,8 @@ export function Navbar() {
 
           <div className="hidden items-center gap-3 md:flex">
             {!isPending && isAuthenticated && user ? (
-
               <>
+                <NotificationBell />
                 <div className="flex items-center gap-3 rounded-full border border-[var(--color-border)] bg-white/90 px-3 py-2">
                   <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-brand-100)] shadow-sm">
                     {user.image ? (

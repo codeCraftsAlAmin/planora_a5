@@ -186,6 +186,15 @@ export interface Review {
   }>;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  message: string;
+  isRead: boolean;
+  type: string;
+  createdAt: string;
+}
+
 export function mapBackendEventToFrontend(event: BackendEvent): import("@/types").EventItem {
   // Format date
   const dateObj = new Date(event.date);
@@ -286,4 +295,15 @@ export const reviewsService = {
     }),
 
   getAllReviews: () => apiFetch<Review[]>("/reviews"),
+};
+
+export const notificationService = {
+  getMyNotifications: () => apiFetch<Notification[]>("/notifications/my-notifications"),
+
+  markAsRead: (id: string) =>
+    apiFetch<Notification>(`/notifications/mark-as-read/${id}`, {
+      method: "PUT",
+    }),
+
+  getUnreadCount: () => apiFetch<number>("/notifications/my-unread-notifications-count"),
 };
