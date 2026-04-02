@@ -18,6 +18,7 @@ import { notificationRouter } from "./app/modules/notifications/notification.rou
 import { invitationRouter } from "./app/modules/invitations/invitation.route";
 import { invitationService } from "./app/modules/invitations/invitation.service";
 import { reviewsRouter } from "./app/modules/reviews/reviews.route";
+import { statsRouter } from "./app/modules/stats/state.route";
 
 const app: Application = express();
 
@@ -69,6 +70,9 @@ cron.schedule("*/30 * * * *", async () => {
     );
   }
 });
+
+// stats router
+app.use("/api/v1/stats", statsRouter);
 
 // reviews router
 app.use("/api/v1/reviews", reviewsRouter);
