@@ -92,13 +92,12 @@ export function LoginForm() {
           <Input type="password" placeholder="Enter your password" {...register("password")} />
         </FormField>
 
-        <div className="flex items-center justify-between gap-4 text-sm">
-          <label className="flex items-center gap-2 text-[var(--color-copy-muted)]">
-            <input type="checkbox" className="h-4 w-4 rounded border-[var(--color-border)]" />
-            Keep me signed in
-          </label>
-          <Link href="/verify-otp" className="font-semibold text-[var(--color-brand-700)]">
-            Verify OTP
+        <div className="flex items-center justify-end">
+          <Link 
+            href="/forgot-password" 
+            className="text-sm font-semibold text-[var(--color-brand-700)] hover:text-[var(--color-brand-800)]"
+          >
+            Forgot password?
           </Link>
         </div>
 

@@ -87,9 +87,10 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Calculate totals
-  const totalEvents = stats.totalPublicEvent + stats.totalPrivateEvent;
-  const totalPeople = stats.totalUserCount + stats.totalHostCount;
+  // Calculate totals safely
+  const totalEvents = (stats.totalPublicEvent ?? 0) + (stats.totalPrivateEvent ?? 0);
+  const totalPeople = (stats.totalUserCount ?? 0) + (stats.totalHostCount ?? 0);
+  const totalInteractions = (stats.totalApprovedRegister ?? 0) + (stats.totalReview ?? 0);
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
@@ -131,7 +132,7 @@ export default function DashboardPage() {
                     Users
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalUserCount}
+                    {stats.totalUserCount ?? 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -139,7 +140,7 @@ export default function DashboardPage() {
                     Hosts
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalHostCount}
+                    {stats.totalHostCount ?? 0}
                   </span>
                 </div>
               </div>
@@ -166,7 +167,7 @@ export default function DashboardPage() {
                     Public
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalPublicEvent}
+                    {stats.totalPublicEvent ?? 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -174,7 +175,7 @@ export default function DashboardPage() {
                     Private
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalPrivateEvent}
+                    {stats.totalPrivateEvent ?? 0}
                   </span>
                 </div>
               </div>
@@ -192,7 +193,7 @@ export default function DashboardPage() {
                   💬 Engagement
                 </p>
                 <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
-                  {stats.totalApprovedRegister + stats.totalReview}
+                  {totalInteractions}
                 </p>
                 <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
                   Total interactions
@@ -204,7 +205,7 @@ export default function DashboardPage() {
                     Registrations
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalApprovedRegister}
+                    {stats.totalApprovedRegister ?? 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -212,7 +213,7 @@ export default function DashboardPage() {
                     Reviews
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalReview}
+                    {stats.totalReview ?? 0}
                   </span>
                 </div>
               </div>
@@ -227,7 +228,7 @@ export default function DashboardPage() {
                   💰 Revenue
                 </p>
                 <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
-                  ৳{stats.totalRevenue.toLocaleString()}
+                  ৳{(stats.totalRevenue ?? 0).toLocaleString()}
                 </p>
                 <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
                   Total earnings
@@ -242,7 +243,7 @@ export default function DashboardPage() {
                     ৳
                     {totalEvents > 0
                       ? Math.round(
-                          stats.totalRevenue / totalEvents,
+                          (stats.totalRevenue ?? 0) / totalEvents,
                         ).toLocaleString()
                       : 0}
                   </span>
@@ -252,7 +253,7 @@ export default function DashboardPage() {
                     Events with fee
                   </span>
                   <span className="font-semibold text-[var(--color-surface-950)]">
-                    {stats.totalRevenue > 0 ? "Yes" : "None"}
+                    {(stats.totalRevenue ?? 0) > 0 ? "Yes" : "None"}
                   </span>
                 </div>
               </div>
@@ -268,10 +269,10 @@ export default function DashboardPage() {
                 📧 Invitations
               </p>
               <p className="mt-4 font-serif text-4xl font-bold text-[var(--color-surface-950)]">
-                {stats.totalInvitation}
+                {stats.totalInvitation ?? 0}
               </p>
               <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
-                Sent invitation{stats.totalInvitation !== 1 ? "s" : ""}
+                Sent invitation{(stats.totalInvitation ?? 0) !== 1 ? "s" : ""}
               </p>
             </div>
             <div className="rounded-xl bg-[#f0fdfb] px-6 py-4">
@@ -279,7 +280,7 @@ export default function DashboardPage() {
                 Pending
               </p>
               <p className="mt-2 font-serif text-3xl font-bold text-[#c7253d]">
-                {stats.totalPendingInvitation}
+                {stats.totalPendingInvitation ?? 0}
               </p>
             </div>
           </div>
@@ -303,7 +304,7 @@ export default function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ label, value }) => `${label}: ${value}`}
+                    label={(props: any) => `${props.label}: ${props.value}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"

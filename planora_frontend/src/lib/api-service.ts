@@ -31,6 +31,12 @@ interface VerifyOtpPayload {
   otp: string;
 }
 
+interface ResetPasswordPayload {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
 interface ResendOtpPayload {
   email: string;
   type?: string;
@@ -135,6 +141,18 @@ export const authService = {
   becomeHost: () =>
     apiFetch<unknown>("/users/become-host", {
       method: "PUT",
+    }),
+
+  requestPasswordReset: (email: string) =>
+    apiFetch<unknown>("/auth/email-otp/request-password-reset", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (data: ResetPasswordPayload) =>
+    apiFetch<unknown>("/auth/email-otp/reset-password", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
 
   getAllUsers: (params?: QueryParams) => {

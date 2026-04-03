@@ -167,23 +167,17 @@ export function OtpVerificationForm() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-4 rounded-2xl bg-[var(--color-surface-100)] px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-[var(--color-surface-950)]">Resend code</p>
-            <p className="text-sm text-[var(--color-copy-muted)]">
-              {secondsLeft > 0
-                ? `Try again in ${secondsLeft}s`
-                : "You can request a new code now."}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleResend}
-            disabled={secondsLeft > 0}
-          >
-            Resend
-          </Button>
+        <div className="flex items-center justify-center rounded-2xl bg-[var(--color-surface-50)] border border-[var(--color-border)] p-4">
+          <p className="text-sm font-medium text-[var(--color-copy)] flex items-center gap-2">
+            {secondsLeft > 0 ? (
+              <>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-brand-500)]" />
+                Wait {secondsLeft}s before requesting a new code
+              </>
+            ) : (
+              <span className="text-[var(--color-brand-600)]">You can request a new code now</span>
+            )}
+          </p>
         </div>
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>

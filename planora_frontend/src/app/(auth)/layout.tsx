@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
               <FeatureCard
                 title="Secure by design"
-                description="Password rules, email checks, and OTP verification are already prepared in the UI."
+                description="Password rules, email checks, and password recovery are already prepared in the UI."
               />
               <FeatureCard
                 title="Ready to connect"

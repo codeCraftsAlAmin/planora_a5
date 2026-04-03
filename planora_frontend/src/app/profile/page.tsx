@@ -64,7 +64,7 @@ export default function ProfilePage() {
     );
   }
 
-  const isHost = user.role === "host";
+  const isHost = user.role === "HOST";
 
   const handleBecomeHost = async () => {
     try {
@@ -299,16 +299,16 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
-            <div className="mt-12">
+            <div className={`mt-12 ${user.role !== "USER" ? "opacity-50 pointer-events-none" : ""}`}>
               <Button
                 onClick={handleBecomeHost}
                 variant={isHost ? "outline" : "secondary"}
                 size="lg"
                 className={isHost ? "border-white/25 bg-white/10 text-white hover:bg-white/16 shadow-none" : "w-full shadow-xl shadow-black/10"}
                 fullWidth={!isHost}
-                disabled={isHost}
+                disabled={user.role !== "USER"}
               >
-                {isHost ? "Host access active" : "Upgrade to Host Mode"}
+                {user.role === "HOST" ? "Host access active" : user.role === "ADMIN" ? "Admin mode" : "Enable Host Mode"}
               </Button>
             </div>
           </Card>
