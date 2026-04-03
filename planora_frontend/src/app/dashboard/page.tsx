@@ -1,406 +1,365 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { MainWrapper } from "@/components/shared/main-wrapper";
-import { Button, ButtonLink } from "@/components/ui/button";
-import {
-  Card,
-  CardBadge,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import {
-  hostRegistrations,
-  userNotifications,
-  userRegisteredEvents,
-} from "@/lib/mock-dashboard";
-import { eventService } from "@/lib/api-service";
-import type { EventItem } from "@/types";
-import { mapBackendEventToFrontend } from "@/lib/api-service";
+import { statsService, type DashboardStats } from "@/lib/api-service";
+
+const COLORS = [
+  "#0b5f52",
+  "#187d68",
+  "#f2cc73",
+  "#c7253d",
+  "#166431",
+  "#a16207",
+];
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isPending } = useAuth();
-  const { showToast } = useToast();
-  const [registrations, setRegistrations] = useState(hostRegistrations);
-  const [myEvents, setMyEvents] = useState<EventItem[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "host") {
-      const fetchMyEvents = async () => {
-        try {
-          setIsLoadingEvents(true);
-          const response = await eventService.getMyEvents();
-          if (response.ok && response.data) {
-            setMyEvents(response.data.map(mapBackendEventToFrontend));
-          }
-        } catch (error) {
-          console.error("Failed to fetch host events:", error);
-        } finally {
-          setIsLoadingEvents(false);
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const response = await statsService.getDashboardStats();
+        if (response.ok && response.data) {
+          setStats(response.data);
+        } else {
+          setError(response.message || "Failed to fetch stats");
         }
-      };
-      fetchMyEvents();
-    }
-  }, [isAuthenticated, user?.role]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch stats");
+        console.error("Stats fetch error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const stats = useMemo(() => {
-    if (user?.role !== "host") return [];
+    fetchStats();
+  }, []);
 
-    const totalRevenue = myEvents.reduce(
-      (sum, event) => sum + (event.feeType === "paid" ? event.membersJoined * parseInt(event.feeLabel.replace("৳", "")) : 0),
-      0
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center pb-16 pt-8">
+        <MainWrapper>
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-brand-200)] border-t-[var(--color-brand-600)]" />
+            <p className="text-sm font-medium text-[var(--color-copy-muted)]">
+              Loading dashboard...
+            </p>
+          </div>
+        </MainWrapper>
+      </div>
     );
+  }
 
-    return [
-      { id: "stat-1", label: "Total events", value: myEvents.length.toString(), detail: "Lifetime published" },
-      { id: "stat-2", label: "Total revenue", value: `৳${totalRevenue.toLocaleString()}`, detail: "Net after fees" },
-      { id: "stat-3", label: "Approvals", value: "0", detail: "Pending private requests" }, // Logic for pending approvals can be added later
-    ];
-  }, [user?.role, myEvents]);
-
-  const pendingCount = useMemo(
-    () =>
-      registrations.filter(
-        (registration) =>
-          registration.eventType === "Private" && registration.status === "Pending"
-      ).length,
-    [registrations]
-  );
-
-  const handleDecision = (registrationId: string, nextStatus: "Approved" | "Rejected") => {
-    setRegistrations((current) =>
-      current.map((registration) =>
-        registration.id === registrationId
-          ? { ...registration, status: nextStatus }
-          : registration
-      )
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center pb-16 pt-8">
+        <MainWrapper>
+          <div className="flex flex-col items-center justify-center space-y-4 rounded-[32px] border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-12 text-center">
+            <h3 className="font-serif text-2xl text-[var(--color-danger-copy)]">
+              Error loading dashboard
+            </h3>
+            <p className="max-w-md text-sm leading-7 text-[var(--color-danger-copy)] opacity-80">
+              {error}
+            </p>
+          </div>
+        </MainWrapper>
+      </div>
     );
+  }
 
-    showToast({
-      title: `Request ${nextStatus.toLowerCase()}`,
-      description: "The attendee management table updated for this demo flow.",
-      variant: nextStatus === "Approved" ? "success" : "default",
-    });
-  };
+  if (!stats) {
+    return null;
+  }
+
+  // Calculate totals
+  const totalEvents = stats.totalPublicEvent + stats.totalPrivateEvent;
+  const totalPeople = stats.totalUserCount + stats.totalHostCount;
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
-      <MainWrapper className="space-y-8">
-        <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-[36px] border border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(246,239,225,0.8))] p-8 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:p-10 lg:p-12">
-            <CardBadge>Private view</CardBadge>
-            <div className="mt-6 max-w-2xl space-y-5">
-              <h1 className="font-serif text-4xl leading-none tracking-tight text-[var(--color-surface-950)] sm:text-5xl">
-                {user?.role === "host"
-                  ? "Host control center for your events, approvals, and revenue."
-                  : "Your event home for registrations, updates, and next steps."}
-              </h1>
-              <p className="max-w-xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
-                {isPending
-                  ? "Checking your account and loading the private workspace."
-                  : isAuthenticated && user
-                  ? `Signed in as ${user.name}. The dashboard layout adapts to your ${user.role} role.`
-                  : "Sign in to access your private workspace. Once authenticated, this screen will route you into the attendee or host dashboard automatically."}
-              </p>
-            </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {isAuthenticated ? (
-                <>
-                  <ButtonLink href="/profile" size="lg">
-                    Open profile
-                  </ButtonLink>
-                  <ButtonLink href="/events" variant="outline" size="lg">
-                    Explore events
-                  </ButtonLink>
-                </>
-              ) : (
-                <>
-                  <ButtonLink href="/login" size="lg">
-                    Go to login
-                  </ButtonLink>
-                  <ButtonLink href="/register" variant="outline" size="lg">
-                    Create account
-                  </ButtonLink>
-                </>
-              )}
+      <MainWrapper className="space-y-10">
+        {/* Header */}
+        <section className="rounded-[36px] border border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,250,240,0.82))] p-8 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:p-10 lg:p-14">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand-700)]">
+            📊 Analytics
+          </p>
+          <div className="mt-5 max-w-3xl space-y-4">
+            <h1 className="font-serif text-5xl leading-none tracking-tight text-[var(--color-surface-950)] sm:text-6xl">
+              Platform Dashboard
+            </h1>
+            <p className="max-w-2xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
+              Real-time metrics for your community events platform.
+            </p>
+          </div>
+        </section>
+
+        {/* Primary Metrics - Community & Events */}
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Community Card */}
+          <div className="rounded-[28px] border-2 border-[var(--color-brand-200)] bg-gradient-to-br from-[var(--color-brand-50)] to-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-700)]">
+                  👥 Community
+                </p>
+                <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
+                  {totalPeople}
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
+                  Total people in platform
+                </p>
+              </div>
+              <div className="space-y-3 border-t border-[var(--color-border)] pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Users
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalUserCount}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Hosts
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalHostCount}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <Card className="overflow-hidden bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
-            <CardHeader>
-              <CardBadge className="bg-white/12 text-white">
-                {user?.role === "host" ? "Host mode" : "Attendee mode"}
-              </CardBadge>
-              <CardTitle className="text-white">
-                {user?.role === "host" ? "Control every moving part" : "Stay ahead of every event"}
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                {user?.role === "host"
-                  ? `You currently have ${pendingCount} private approval request${pendingCount === 1 ? "" : "s"} to review.`
-                  : "Track approvals, reminders, and invitations from one place."}
-              </CardDescription>
-            </CardHeader>
-            <div className="space-y-4 p-6">
-              {(user?.role === "host"
-                ? [
-                    "See at-a-glance event metrics before opening each workspace",
-                    "Review private registrations and make approval decisions quickly",
-                    "Move between hosting operations and attendee-facing event pages",
-                  ]
-                : [
-                    "Review your registered events without digging through email",
-                    "Check platform notifications in the same private workspace",
-                    "Upgrade to host when you're ready to publish your own experiences",
-                  ]).map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[24px] border border-white/10 bg-white/8 px-4 py-4 text-sm leading-7 text-white/78"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </Card>
-        </section>
-
-        {user?.role === "host" ? (
-          <>
-            <section className="space-y-4">
+          {/* Events Card */}
+          <div className="rounded-[28px] border-2 border-[#f2cc73] bg-gradient-to-br from-[#fffbf0] to-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+            <div className="space-y-6">
               <div>
-                <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
-                  Performance snapshot
-                </h2>
-                <p className="text-sm text-[var(--color-copy-muted)]">
-                  Small cards surface the numbers hosts care about first.
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#a16207]">
+                  🎯 Events
+                </p>
+                <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
+                  {totalEvents}
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
+                  Total events published
                 </p>
               </div>
-              <div className="grid gap-6 md:grid-cols-3">
-                {stats.map((stat, index) => (
-                  <Card
-                    key={stat.id}
-                    className={index === 1 ? "bg-[var(--color-surface-950)] text-white" : ""}
-                  >
-                    <p
-                      className={
-                        index === 1
-                          ? "text-xs font-semibold uppercase tracking-[0.24em] text-white/60"
-                          : "text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-copy-muted)]"
-                      }
-                    >
-                      {stat.label}
-                    </p>
-                    <p
-                      className={
-                        index === 1
-                          ? "mt-5 font-serif text-4xl text-white"
-                          : "mt-5 font-serif text-4xl text-[var(--color-surface-950)]"
-                      }
-                    >
-                      {index === 2 ? pendingCount : stat.value}
-                    </p>
-                    <p
-                      className={
-                        index === 1
-                          ? "mt-3 text-sm text-white/68"
-                          : "mt-3 text-sm text-[var(--color-copy-muted)]"
-                      }
-                    >
-                      {stat.detail}
-                    </p>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
-                    Registration management
-                  </h2>
-                  <p className="text-sm text-[var(--color-copy-muted)]">
-                    Review attendees and approve or reject private event requests.
-                  </p>
+              <div className="space-y-3 border-t border-[var(--color-border)] pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Public
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalPublicEvent}
+                  </span>
                 </div>
-                <ButtonLink href="/events" variant="ghost">
-                  View live events
-                </ButtonLink>
-              </div>
-
-              <Card className="overflow-hidden p-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left">
-                    <thead className="bg-[var(--color-surface-100)] text-xs uppercase tracking-[0.2em] text-[var(--color-copy-muted)]">
-                      <tr>
-                        <th className="px-6 py-4 font-semibold">Attendee</th>
-                        <th className="px-6 py-4 font-semibold">Event</th>
-                        <th className="px-6 py-4 font-semibold">Requested</th>
-                        <th className="px-6 py-4 font-semibold">Status</th>
-                        <th className="px-6 py-4 font-semibold">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registrations.map((registration) => {
-                        const isPrivatePending =
-                          registration.eventType === "Private" &&
-                          registration.status === "Pending";
-
-                        return (
-                          <tr
-                            key={registration.id}
-                            className="border-t border-[var(--color-border)] align-top"
-                          >
-                            <td className="px-6 py-5">
-                              <p className="font-semibold text-[var(--color-surface-950)]">
-                                {registration.attendeeName}
-                              </p>
-                              <p className="mt-1 text-sm text-[var(--color-copy-muted)]">
-                                {registration.email}
-                              </p>
-                            </td>
-                            <td className="px-6 py-5">
-                              <p className="font-semibold text-[var(--color-surface-950)]">
-                                {registration.eventTitle}
-                              </p>
-                              <p className="mt-1 text-sm text-[var(--color-copy-muted)]">
-                                {registration.eventType} / {registration.ticketType}
-                              </p>
-                            </td>
-                            <td className="px-6 py-5 text-sm text-[var(--color-copy)]">
-                              {registration.requestedAt}
-                            </td>
-                            <td className="px-6 py-5">
-                              <span
-                                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                                  registration.status === "Approved"
-                                    ? "border border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-copy)]"
-                                    : registration.status === "Rejected"
-                                      ? "border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-copy)]"
-                                      : "border border-[var(--color-border)] bg-[var(--color-surface-100)] text-[var(--color-copy)]"
-                                }`}
-                              >
-                                {registration.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-5">
-                              {isPrivatePending ? (
-                                <div className="flex flex-wrap gap-3">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleDecision(registration.id, "Approved")}
-                                  >
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleDecision(registration.id, "Rejected")}
-                                  >
-                                    Reject
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-sm text-[var(--color-copy-muted)]">
-                                  No action needed
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Private
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalPrivateEvent}
+                  </span>
                 </div>
-              </Card>
-            </section>
-          </>
-        ) : (
-          <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <Card>
-              <CardHeader>
-                <CardBadge>My Registered Events</CardBadge>
-                <CardTitle>Everything you&apos;ve joined</CardTitle>
-                <CardDescription>
-                  A simple list of your current event commitments.
-                </CardDescription>
-              </CardHeader>
-              <div className="mt-6 space-y-4">
-                {userRegisteredEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface-50)] p-5"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-[var(--color-surface-950)]">
-                          {event.title}
-                        </h3>
-                        <p className="mt-1 text-sm text-[var(--color-copy-muted)]">
-                          {event.dateLabel} / {event.venue}
-                        </p>
-                        <p className="mt-3 text-sm text-[var(--color-copy)]">
-                          Ticket: {event.ticketType}
-                        </p>
-                      </div>
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          event.status === "Confirmed"
-                            ? "border border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-copy)]"
-                            : "border border-[var(--color-border)] bg-[var(--color-surface-100)] text-[var(--color-copy)]"
-                        }`}
-                      >
-                        {event.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
-            </Card>
+            </div>
+          </div>
+        </div>
 
-            <Card className="bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(237,247,244,0.86))]">
-              <CardHeader>
-                <CardBadge>Notifications</CardBadge>
-                <CardTitle>Recent updates</CardTitle>
-                <CardDescription>
-                  Keep track of approvals, reminders, and invitation activity.
-                </CardDescription>
-              </CardHeader>
-              <div className="mt-6 space-y-4">
-                {userNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="rounded-[24px] border border-[var(--color-border)] bg-white/85 p-5"
+        {/* Engagement & Revenue */}
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Engagement Card */}
+          <div className="rounded-[28px] border-2 border-[#166431] bg-gradient-to-br from-[#f0fdf4] to-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#166431]">
+                  💬 Engagement
+                </p>
+                <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
+                  {stats.totalApprovedRegister + stats.totalReview}
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
+                  Total interactions
+                </p>
+              </div>
+              <div className="space-y-3 border-t border-[var(--color-border)] pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Registrations
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalApprovedRegister}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Reviews
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalReview}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Card */}
+          <div className="rounded-[28px] border-2 border-[#c7253d] bg-gradient-to-br from-[#fef3f2] to-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#c7253d]">
+                  💰 Revenue
+                </p>
+                <p className="mt-4 font-serif text-5xl font-bold text-[var(--color-surface-950)]">
+                  ৳{stats.totalRevenue.toLocaleString()}
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
+                  Total earnings
+                </p>
+              </div>
+              <div className="space-y-3 border-t border-[var(--color-border)] pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Avg per event
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    ৳
+                    {totalEvents > 0
+                      ? Math.round(
+                          stats.totalRevenue / totalEvents,
+                        ).toLocaleString()
+                      : 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--color-copy)]">
+                    Events with fee
+                  </span>
+                  <span className="font-semibold text-[var(--color-surface-950)]">
+                    {stats.totalRevenue > 0 ? "Yes" : "None"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Invitations */}
+        <div className="rounded-[28px] border-2 border-[#187d68] bg-gradient-to-r from-[#f0fdfb] to-white p-8 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0b5f52]">
+                📧 Invitations
+              </p>
+              <p className="mt-4 font-serif text-4xl font-bold text-[var(--color-surface-950)]">
+                {stats.totalInvitation}
+              </p>
+              <p className="mt-2 text-sm text-[var(--color-copy-muted)]">
+                Sent invitation{stats.totalInvitation !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="rounded-xl bg-[#f0fdfb] px-6 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0b5f52]">
+                Pending
+              </p>
+              <p className="mt-2 font-serif text-3xl font-bold text-[#c7253d]">
+                {stats.totalPendingInvitation}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Event Status Pie Chart */}
+          <div className="rounded-[28px] border border-[var(--color-border)] bg-white/80 p-8 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+            <h2 className="font-serif text-2xl font-bold text-[var(--color-surface-950)]">
+              📈 Event Status
+            </h2>
+            <p className="mt-1 text-sm text-[var(--color-copy-muted)]">
+              Distribution across statuses
+            </p>
+            <div className="mt-6 flex justify-center">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={stats.pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ label, value }) => `${label}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-[var(--color-surface-950)]">
-                          {notification.title}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-[var(--color-copy)]">
-                          {notification.description}
-                        </p>
-                      </div>
-                      <span
-                        className={`mt-1 inline-flex h-3 w-3 rounded-full ${
-                          notification.tone === "success"
-                            ? "bg-[var(--color-brand-500)]"
-                            : "bg-[var(--color-accent-500)]"
-                        }`}
+                    {stats.pieChartData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
                       />
-                    </div>
-                    <p className="mt-4 text-xs uppercase tracking-[0.18em] text-[var(--color-copy-muted)]">
-                      {notification.timeLabel}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </section>
-        )}
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Monthly Activity Bar Chart */}
+          <div className="rounded-[28px] border border-[var(--color-border)] bg-white/80 p-8 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+            <h2 className="font-serif text-2xl font-bold text-[var(--color-surface-950)]">
+              📊 Monthly Activity
+            </h2>
+            <p className="mt-1 text-sm text-[var(--color-copy-muted)]">
+              Events published per month
+            </p>
+            <div className="mt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="month"
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "2-digit",
+                      });
+                    }}
+                  />
+                  <YAxis />
+                  <Tooltip
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      });
+                    }}
+                    formatter={(value) => [`${value} events`, "Count"]}
+                  />
+                  <Bar dataKey="count" fill="#0b5f52" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
       </MainWrapper>
     </div>
   );

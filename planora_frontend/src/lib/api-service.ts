@@ -318,13 +318,51 @@ export const reviewsService = {
 
 export const notificationService = {
   getMyNotifications: () =>
-    apiFetch<Notification[]>("/notifications/my-notifications"),
+    apiFetch<Notification[]>("/notifications/my-notifications").catch(() => ({
+      ok: false,
+      message: "Failed to fetch notifications",
+      data: [] as Notification[],
+    })),
 
   markAsRead: (id: string) =>
     apiFetch<Notification>(`/notifications/mark-as-read/${id}`, {
       method: "PUT",
-    }),
+    }).catch(() => ({
+      ok: false,
+      message: "Failed to mark notification as read",
+      data: null as any,
+    })),
 
   getUnreadCount: () =>
-    apiFetch<number>("/notifications/my-unread-notifications-count"),
+    apiFetch<number>("/notifications/my-unread-notifications-count").catch(
+      () => ({
+        ok: false,
+        message: "Failed to fetch unread count",
+        data: 0,
+      }),
+    ),
+};
+
+export interface DashboardStats {
+  pieChartData: Array<{
+    label: string;
+    value: number;
+  }>;
+  barChartData: Array<{
+    month: string;
+    count: number;
+  }>;
+  totalUserCount: number;
+  totalHostCount: number;
+  totalPublicEvent: number;
+  totalPrivateEvent: number;
+  totalApprovedRegister: number;
+  totalRevenue: number;
+  totalInvitation: number;
+  totalPendingInvitation: number;
+  totalReview: number;
+}
+
+export const statsService = {
+  getDashboardStats: () => apiFetch<DashboardStats>("/stats/"),
 };

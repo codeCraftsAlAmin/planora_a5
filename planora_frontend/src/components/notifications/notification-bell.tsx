@@ -15,11 +15,12 @@ export function NotificationBell() {
   const fetchUnreadCount = async () => {
     try {
       const res = await notificationService.getUnreadCount();
-      if (res.ok) {
+      if (res.ok && res.data !== undefined) {
         setUnreadCount(Number(res.data));
       }
     } catch (err) {
-      console.error("Failed to fetch unread count", err);
+      // Silently fail - notifications not available
+      setUnreadCount(0);
     }
   };
 
@@ -31,7 +32,8 @@ export function NotificationBell() {
         setNotifications(res.data);
       }
     } catch (err) {
-      console.error("Failed to fetch notifications", err);
+      // Silently fail - notifications not available
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +48,7 @@ export function NotificationBell() {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (err) {
-      console.error("Failed to mark as read", err);
+      // Silently fail - notifications not available
     }
   };
 
@@ -64,7 +66,10 @@ export function NotificationBell() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -146,9 +151,15 @@ export function NotificationBell() {
                       </Button>
                     </div>
                     <span className="text-[10px] uppercase tracking-wider text-[var(--color-copy-muted)]">
-                      {new Date(notification.createdAt).toLocaleDateString("en-US", {
-                        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-                      })}
+                      {new Date(notification.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </span>
                   </div>
                 ))}
