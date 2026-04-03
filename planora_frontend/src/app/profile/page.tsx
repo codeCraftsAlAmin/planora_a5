@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Camera, Loader2, User as UserIcon } from "lucide-react";
+import { Camera, Loader2, Lock, ShieldCheck, User as UserIcon } from "lucide-react";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/api-service";
+import { ChangePasswordForm } from "@/components/forms/change-password-form";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -39,6 +40,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showSecurity, setShowSecurity] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -274,44 +276,82 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <Card className="flex flex-col justify-between bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
-            <div>
-              <CardHeader>
-                <CardBadge className="bg-white/12 text-white border-white/20">Host program</CardBadge>
-                <CardTitle className="text-white text-3xl mt-2">Become a Host</CardTitle>
-                <CardDescription className="text-white/70 text-base mt-2">
-                  Launch private or public events and manage attendees from your own workspace.
-                </CardDescription>
-              </CardHeader>
-              <div className="mt-8 space-y-4">
-                {[
-                  "Create branded event pages with public or private visibility.",
-                  "Approve or reject requests for invite-only experiences.",
-                  "Track registrations and revenue from a single dashboard.",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white/78"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand-400)] shrink-0" />
-                    {item}
-                  </div>
-                ))}
+          <div className="space-y-6">
+            <Card className="flex flex-col justify-between bg-[linear-gradient(180deg,rgba(10,86,74,0.98),rgba(7,61,53,0.96))] text-white">
+              <div>
+                <CardHeader>
+                  <CardBadge className="bg-white/12 text-white border-white/20">Host program</CardBadge>
+                  <CardTitle className="text-white text-3xl mt-2">Become a Host</CardTitle>
+                  <CardDescription className="text-white/70 text-base mt-2">
+                    Launch private or public events and manage attendees from your own workspace.
+                  </CardDescription>
+                </CardHeader>
+                <div className="mt-8 space-y-4">
+                  {[
+                    "Create branded event pages with public or private visibility.",
+                    "Approve or reject requests for invite-only experiences.",
+                    "Track registrations and revenue from a single dashboard.",
+                  ].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white/78"
+                    >
+                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand-400)] shrink-0" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
               </div>
+              <div className={`mt-12 ${user.role !== "USER" ? "opacity-50 pointer-events-none" : ""}`}>
+                <Button
+                  onClick={handleBecomeHost}
+                  variant={isHost ? "outline" : "secondary"}
+                  size="lg"
+                  className={isHost ? "border-white/25 bg-white/10 text-white hover:bg-white/16 shadow-none" : "w-full shadow-xl shadow-black/10"}
+                  fullWidth={!isHost}
+                  disabled={user.role !== "USER"}
+                >
+                  {user.role === "HOST" ? "Host access active" : user.role === "ADMIN" ? "Admin mode" : "Enable Host Mode"}
+                </Button>
+              </div>
+            </Card>
+
+            <div className="rounded-[36px] border border-[var(--color-border)] bg-white p-8 shadow-[0_20px_50px_rgba(15,23,42,0.06)] sm:p-10">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-[var(--color-surface-100)] text-[var(--color-surface-950)]">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[var(--color-surface-950)]">Privacy & Security</h2>
+                    <p className="text-xs text-[var(--color-copy-muted)]">Manage your credentials</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowSecurity(!showSecurity)}
+                >
+                  {showSecurity ? "Hide settings" : "Show settings"}
+                </Button>
+              </div>
+
+              {showSecurity ? (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <ChangePasswordForm />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="h-12 w-12 rounded-full bg-[var(--color-surface-50)] flex items-center justify-center mb-4">
+                    <Lock className="w-6 h-6 text-[var(--color-copy-muted)]" />
+                  </div>
+                  <p className="text-sm text-[var(--color-copy-muted)] max-w-[240px]">
+                    Update your password regularly to keep your account secure.
+                  </p>
+                </div>
+              )}
             </div>
-            <div className={`mt-12 ${user.role !== "USER" ? "opacity-50 pointer-events-none" : ""}`}>
-              <Button
-                onClick={handleBecomeHost}
-                variant={isHost ? "outline" : "secondary"}
-                size="lg"
-                className={isHost ? "border-white/25 bg-white/10 text-white hover:bg-white/16 shadow-none" : "w-full shadow-xl shadow-black/10"}
-                fullWidth={!isHost}
-                disabled={user.role !== "USER"}
-              >
-                {user.role === "HOST" ? "Host access active" : user.role === "ADMIN" ? "Admin mode" : "Enable Host Mode"}
-              </Button>
-            </div>
-          </Card>
+          </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-3">

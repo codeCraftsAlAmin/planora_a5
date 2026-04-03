@@ -42,6 +42,11 @@ interface ResendOtpPayload {
   type?: string;
 }
 
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+}
+
 type QueryParams = Record<string, string | number | boolean | undefined>;
 
 function getErrorMessage(body: unknown) {
@@ -168,6 +173,12 @@ export const authService = {
     const searchParams = new URLSearchParams(filteredParams).toString();
     return apiFetch<unknown>(`/users/?${searchParams}`);
   },
+
+  changePassword: (data: ChangePasswordPayload) =>
+    apiFetch<unknown>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 export interface BackendEvent {
