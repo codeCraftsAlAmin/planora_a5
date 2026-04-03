@@ -4,19 +4,21 @@ import { useEffect, useMemo, useState } from "react";
 import { EventCard } from "@/components/shared/event-card";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Input } from "@/components/ui/input";
-import { eventCategories, eventStatuses } from "@/lib/mock-events"; // Removed mockEvents import
-import type { EventCategory, EventItem, EventStatus, EventVisibility } from "@/types";
+import { eventStatuses } from "@/lib/mock-events"; // Removed mockEvents import
+import type { EventItem, EventStatus, EventVisibility } from "@/types";
 import { eventService, mapBackendEventToFrontend } from "@/lib/api-service";
 
 export default function EventsPage() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [category, setCategory] = useState<EventCategory | "all">("all");
   const [status, setStatus] = useState<EventStatus | "all">("all");
   const [visibility, setVisibility] = useState<EventVisibility | "all">("all");
   const [events, setEvents] = useState<EventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(9); // 9 items per page for 3-column layout
 
   // Debounce search query
   useEffect(() => {
@@ -34,12 +36,17 @@ export default function EventsPage() {
         const params: Record<string, string | number | boolean | undefined> = {
           searchTerm: debouncedQuery || undefined,
           type: visibility === "all" ? undefined : visibility,
+          page: currentPage,
+          limit: limit,
         };
 
         const response = await eventService.getAllEvents(params);
         if (response.ok && response.data) {
           const mappedEvents = response.data.map(mapBackendEventToFrontend);
           setEvents(mappedEvents);
+          if (response.meta) {
+            setTotalPages(response.meta.totalPages);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch events");
@@ -49,16 +56,15 @@ export default function EventsPage() {
     };
 
     fetchEvents();
-  }, [debouncedQuery, visibility]);
+  }, [debouncedQuery, visibility, currentPage, limit]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      const matchesCategory = category === "all" || event.category === category;
       const matchesStatus = status === "all" || event.status === status;
 
-      return matchesCategory && matchesStatus;
+      return matchesStatus;
     });
-  }, [category, status, events]);
+  }, [status, events]);
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
@@ -80,7 +86,7 @@ export default function EventsPage() {
         </section>
 
         <section className="rounded-[32px] border border-[var(--color-border)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-[1fr_0.7fr_0.7fr_0.7fr]">
+          <div className="grid gap-4 lg:grid-cols-[1fr_0.7fr_0.7fr]">
             <label className="space-y-2">
               <span className="text-sm font-semibold text-[var(--color-surface-950)]">
                 Search
@@ -106,25 +112,6 @@ export default function EventsPage() {
                 <option value="all">Any type</option>
                 <option value="PUBLIC">Public</option>
                 <option value="PRIVATE">Private</option>
-              </select>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Category
-              </span>
-              <select
-                value={category}
-                onChange={(event) =>
-                  setCategory(event.target.value as EventCategory | "all")
-                }
-                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
-              >
-                {eventCategories.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
               </select>
             </label>
 
@@ -173,25 +160,58 @@ export default function EventsPage() {
                   Public events
                 </h2>
                 <p className="text-sm text-[var(--color-copy-muted)]">
-                  {filteredEvents.length} event{filteredEvents.length === 1 ? "" : "s"} match your current filters.
+                  {filteredEvents.length} event
+                  {filteredEvents.length === 1 ? "" : "s"} on this page
                 </p>
               </div>
             </div>
 
             {filteredEvents.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {filteredEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="mt-8 flex items-center justify-center gap-4">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[var(--color-copy)]">
+                      Page <span className="font-semibold">{currentPage}</span>{" "}
+                      of <span className="font-semibold">{totalPages}</span>
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
             ) : (
               <div className="rounded-[28px] border border-dashed border-[var(--color-border-strong)] bg-white/70 px-6 py-12 text-center">
                 <h3 className="font-serif text-2xl text-[var(--color-surface-950)]">
                   No events match that search yet
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-copy-muted)]">
-                  Try a different keyword or reset the category and status filters
-                  to widen the results.
+                  Try a different keyword or reset the category and status
+                  filters to widen the results.
                 </p>
               </div>
             )}

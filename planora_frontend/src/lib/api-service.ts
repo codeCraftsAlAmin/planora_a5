@@ -9,6 +9,12 @@ interface ApiResponse<T> {
   ok: boolean;
   message: string;
   data: T;
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 interface AuthCredentials {
@@ -71,11 +77,14 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}) {
   if (!response.ok) {
     if (response.status === 404 && !isJsonResponse) {
       throw new Error(
-        "API route not found. Check NEXT_PUBLIC_BACKEND_URL and restart the Next.js dev server so proxy rewrites are enabled."
+        "API route not found. Check NEXT_PUBLIC_BACKEND_URL and restart the Next.js dev server so proxy rewrites are enabled.",
       );
     }
 
-    throw new Error(getErrorMessage(body) || `API request failed with status ${response.status}.`);
+    throw new Error(
+      getErrorMessage(body) ||
+        `API request failed with status ${response.status}.`,
+    );
   }
 
   return (body ?? {
@@ -86,53 +95,58 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}) {
 }
 
 export const authService = {
-  signUp: (data: SignUpPayload) => apiFetch<unknown>("/auth/sign-up/email", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }),
+  signUp: (data: SignUpPayload) =>
+    apiFetch<unknown>("/auth/sign-up/email", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  signIn: (data: AuthCredentials) => apiFetch<unknown>("/auth/sign-in/email", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }),
+  signIn: (data: AuthCredentials) =>
+    apiFetch<unknown>("/auth/sign-in/email", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  verifyOtp: (data: VerifyOtpPayload) => apiFetch<unknown>("/auth/email-otp/verify-email", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }),
+  verifyOtp: (data: VerifyOtpPayload) =>
+    apiFetch<unknown>("/auth/email-otp/verify-email", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   resendOtp: (data: ResendOtpPayload) =>
     apiFetch<unknown>("/auth/email-otp/send-verification-otp", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }),
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  signOut: () => apiFetch<unknown>("/auth/sign-out", {
-    method: "POST",
-  }),
+  signOut: () =>
+    apiFetch<unknown>("/auth/sign-out", {
+      method: "POST",
+    }),
 
   getProfile: () => apiFetch<AuthUser>("/users/my-profile"),
 
-  updateProfile: (formData: FormData) => apiFetch<unknown>("/users/update/my-profile", {
-    method: "PUT",
-    body: formData,
-  }),
+  updateProfile: (formData: FormData) =>
+    apiFetch<unknown>("/users/update/my-profile", {
+      method: "PUT",
+      body: formData,
+    }),
 
-  becomeHost: () => apiFetch<unknown>("/users/become-host", {
-    method: "PUT",
-  }),
+  becomeHost: () =>
+    apiFetch<unknown>("/users/become-host", {
+      method: "PUT",
+    }),
 
   getAllUsers: (params?: QueryParams) => {
-    const filteredParams = Object.entries(params ?? {}).reduce<Record<string, string>>(
-      (accumulator, [key, value]) => {
-        if (value !== undefined) {
-          accumulator[key] = String(value);
-        }
+    const filteredParams = Object.entries(params ?? {}).reduce<
+      Record<string, string>
+    >((accumulator, [key, value]) => {
+      if (value !== undefined) {
+        accumulator[key] = String(value);
+      }
 
-        return accumulator;
-      },
-      {}
-    );
+      return accumulator;
+    }, {});
     const searchParams = new URLSearchParams(filteredParams).toString();
     return apiFetch<unknown>(`/users/?${searchParams}`);
   },
@@ -195,7 +209,9 @@ export interface Notification {
   createdAt: string;
 }
 
-export function mapBackendEventToFrontend(event: BackendEvent): import("@/types").EventItem {
+export function mapBackendEventToFrontend(
+  event: BackendEvent,
+): import("@/types").EventItem {
   // Format date
   const dateObj = new Date(event.date);
   const dateLabel = dateObj.toLocaleDateString("en-US", {
@@ -235,15 +251,14 @@ export function mapBackendEventToFrontend(event: BackendEvent): import("@/types"
 
 export const eventService = {
   getAllEvents: (params?: QueryParams) => {
-    const filteredParams = Object.entries(params ?? {}).reduce<Record<string, string>>(
-      (accumulator, [key, value]) => {
-        if (value !== undefined) {
-          accumulator[key] = String(value);
-        }
-        return accumulator;
-      },
-      {}
-    );
+    const filteredParams = Object.entries(params ?? {}).reduce<
+      Record<string, string>
+    >((accumulator, [key, value]) => {
+      if (value !== undefined) {
+        accumulator[key] = String(value);
+      }
+      return accumulator;
+    }, {});
     const searchParams = new URLSearchParams(filteredParams).toString();
     return apiFetch<BackendEvent[]>(`/events/?${searchParams}`);
   },
@@ -274,9 +289,13 @@ export const eventService = {
 };
 
 export const eventRegisterService = {
-  registerForEvent: (id: string) => apiFetch<{ result: any; paymentUrl: string | null }>(`/event-register/register/${id}`, {
-    method: "POST",
-  }),
+  registerForEvent: (id: string) =>
+    apiFetch<{ result: any; paymentUrl: string | null }>(
+      `/event-register/register/${id}`,
+      {
+        method: "POST",
+      },
+    ),
 
   getMyRegistrations: () => apiFetch<any[]>("/event-register"),
 };
@@ -298,12 +317,14 @@ export const reviewsService = {
 };
 
 export const notificationService = {
-  getMyNotifications: () => apiFetch<Notification[]>("/notifications/my-notifications"),
+  getMyNotifications: () =>
+    apiFetch<Notification[]>("/notifications/my-notifications"),
 
   markAsRead: (id: string) =>
     apiFetch<Notification>(`/notifications/mark-as-read/${id}`, {
       method: "PUT",
     }),
 
-  getUnreadCount: () => apiFetch<number>("/notifications/my-unread-notifications-count"),
+  getUnreadCount: () =>
+    apiFetch<number>("/notifications/my-unread-notifications-count"),
 };
