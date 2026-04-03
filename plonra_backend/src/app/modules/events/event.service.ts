@@ -84,7 +84,7 @@ const getMyEventsService = async (user: IRequestUserInterface) => {
       reviews: {
         where: { isDeleted: false },
       },
-    }
+    },
   });
 
   return result;
