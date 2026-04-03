@@ -148,8 +148,44 @@ export default function ProfilePage() {
               </Button>
             </div>
 
+            {/* Profile Avatar Section - Top & Flexible */}
+            <div className="mt-8 flex flex-col items-center">
+              <div 
+                className="relative group cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] bg-[var(--color-brand-50)] flex items-center justify-center transition-all group-hover:shadow-[0_15px_50px_rgba(0,0,0,0.15)]">
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                  ) : user.image ? (
+                    <img src={user.image} alt={user.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  ) : (
+                    <div className="text-4xl font-bold text-[var(--color-brand-600)]">{user.name.charAt(0)}</div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    <Camera className="text-white w-10 h-10" />
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 -right-1 h-10 w-10 bg-white rounded-full flex items-center justify-center shadow-lg border border-[var(--color-border)] group-hover:bg-[var(--color-brand-50)] transition-colors">
+                  <Camera className="w-5 h-5 text-[var(--color-brand-600)]" />
+                </div>
+              </div>
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {selectedFile && !isSubmitting && (
+                <p className="mt-3 text-xs font-medium text-[var(--color-brand-600)] animate-pulse">
+                  Click 'Save' to update photo
+                </p>
+              )}
+            </div>
+
             {isEditing ? (
-              <form onSubmit={handleSubmit(onUpdateProfile)} className="mt-8 space-y-6">
+              <form onSubmit={handleSubmit(onUpdateProfile)} className="mt-10 space-y-6">
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold">Name</label>
@@ -191,45 +227,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Profile Picture</label>
-                  <div className="flex items-center gap-6">
-                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                      <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-[var(--color-brand-50)] flex items-center justify-center">
-                        {previewUrl ? (
-                          <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
-                        ) : user.image ? (
-                          <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="text-3xl font-bold text-[var(--color-brand-600)]">{user.name.charAt(0)}</div>
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Camera className="text-white w-8 h-8" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Choose new photo
-                      </Button>
-                      <p className="text-[10px] text-[var(--color-copy-muted)]">
-                        JPG, PNG or GIF. Max size 2MB.
-                      </p>
-                    </div>
-                    <input 
-                      ref={fileInputRef}
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
 
                 <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
                   {isSubmitting ? (
@@ -244,33 +241,13 @@ export default function ProfilePage() {
               </form>
             ) : (
               <>
-                <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
-                  <div 
-                    className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-white bg-[var(--color-brand-100)] shadow-lg group cursor-pointer"
-                    onClick={() => {
-                      setIsEditing(true);
-                      setTimeout(() => fileInputRef.current?.click(), 0);
-                    }}
-                  >
-                    {user.image ? (
-                      <img src={user.image} alt={user.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-[var(--color-brand-700)]">
-                        {user.name.charAt(0)}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="text-white w-6 h-6" />
-                    </div>
-                  </div>
-                  <div>
-                    <h1 className="font-serif text-4xl tracking-tight text-[var(--color-surface-950)]">
-                      {user.name}
-                    </h1>
-                    <p className="mt-2 text-sm uppercase tracking-[0.22em] text-[var(--color-copy-muted)]">
-                      {user.role} • {user.gender || "Not specified"}
-                    </p>
-                  </div>
+                <div className="mt-6 flex flex-col items-center">
+                  <h1 className="font-serif text-4xl tracking-tight text-[var(--color-surface-950)] text-center">
+                    {user.name}
+                  </h1>
+                  <p className="mt-2 text-sm uppercase tracking-[0.22em] text-[var(--color-copy-muted)] text-center">
+                    {user.role} • {user.gender || "Not specified"}
+                  </p>
                 </div>
 
                 <div className="mt-10 grid gap-8 sm:grid-cols-2">
