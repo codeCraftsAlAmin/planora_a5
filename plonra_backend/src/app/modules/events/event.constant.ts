@@ -5,6 +5,7 @@ export const eventFilterableFields = [
   "isFeatured",
   "fee",
   "organizerId",
+  "status",
 ];
 
 export const eventIncludingConfig = {
