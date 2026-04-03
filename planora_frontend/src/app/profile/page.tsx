@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Camera, Loader2, User as UserIcon } from "lucide-react";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,8 @@ export default function ProfilePage() {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -83,6 +86,20 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      // Auto-switch to editing mode if not already
+      if (!isEditing) setIsEditing(true);
+    }
+  };
+
   const onUpdateProfile = async (values: ProfileFormValues) => {
     try {
       const formData = new FormData();
@@ -102,6 +119,8 @@ export default function ProfilePage() {
           variant: "success",
         });
         setIsEditing(false);
+        setSelectedFile(null);
+        setPreviewUrl(null);
         await refetch();
       }
     } catch (err: unknown) {
@@ -174,36 +193,75 @@ export default function ProfilePage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold">Profile Picture</label>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-6">
+                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-[var(--color-brand-50)] flex items-center justify-center">
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                        ) : user.image ? (
+                          <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="text-3xl font-bold text-[var(--color-brand-600)]">{user.name.charAt(0)}</div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera className="text-white w-8 h-8" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Choose new photo
+                      </Button>
+                      <p className="text-[10px] text-[var(--color-copy-muted)]">
+                        JPG, PNG or GIF. Max size 2MB.
+                      </p>
+                    </div>
                     <input 
+                      ref={fileInputRef}
                       type="file" 
                       accept="image/*"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                      className="text-sm text-[var(--color-copy-muted)]"
+                      onChange={handleFileChange}
+                      className="hidden"
                     />
-                    {selectedFile && (
-                      <span className="text-xs text-[var(--color-brand-600)] font-medium">
-                        {selectedFile.name} selected
-                      </span>
-                    )}
                   </div>
                 </div>
 
                 <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving changes..." : "Save profile changes"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving changes...
+                    </>
+                  ) : (
+                    "Save profile changes"
+                  )}
                 </Button>
               </form>
             ) : (
               <>
                 <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
-                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-white bg-[var(--color-brand-100)] shadow-lg">
+                  <div 
+                    className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-2 border-white bg-[var(--color-brand-100)] shadow-lg group cursor-pointer"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setTimeout(() => fileInputRef.current?.click(), 0);
+                    }}
+                  >
                     {user.image ? (
-                      <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                      <img src={user.image} alt={user.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-[var(--color-brand-700)]">
                         {user.name.charAt(0)}
                       </div>
                     )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="text-white w-6 h-6" />
+                    </div>
                   </div>
                   <div>
                     <h1 className="font-serif text-4xl tracking-tight text-[var(--color-surface-950)]">
