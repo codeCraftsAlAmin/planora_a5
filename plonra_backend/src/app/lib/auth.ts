@@ -9,6 +9,7 @@ import status from "http-status";
 import { envVars } from "../config/env";
 import { waitUntil } from "@vercel/functions";
 
+
 export const auth = betterAuth({
   baseUrl: envVars.BETTER_AUTH_URL,
   secret: envVars.BETTER_AUTH_SECRET,
@@ -20,6 +21,7 @@ export const auth = betterAuth({
       handler: waitUntil,
     },
   },
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
