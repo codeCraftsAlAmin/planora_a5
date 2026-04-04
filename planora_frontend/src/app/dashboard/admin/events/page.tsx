@@ -10,7 +10,8 @@ import {
   CalendarX2,
   CalendarCheck2,
   Star,
-  StarOff
+  StarOff,
+  Trash2
 } from "lucide-react";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { eventService, adminService, type BackendEvent } from "@/lib/api-service";
@@ -40,7 +41,7 @@ export default function AdminEventsPage() {
   
   // Modals state
   const [selectedEvent, setSelectedEvent] = useState<BackendEvent | null>(null);
-  const [activeModal, setActiveModal] = useState<"FEATURED" | null>(null);
+  const [activeModal, setActiveModal] = useState<"FEATURED" | "DELETE" | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,6 +104,25 @@ export default function AdminEventsPage() {
       if (res.ok) {
         showToast({ title: "Success", description: `Event is now ${newFeaturedStatus ? "featured" : "unfeatured"}.` });
         fetchEvents();
+      }
+    } catch (err: any) {
+      showToast({ title: "Error", description: err.message, variant: "error" });
+    } finally {
+      setIsActionLoading(false);
+      setActiveModal(null);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    try {
+      setIsActionLoading(true);
+      const res = await eventService.deleteEvent(selectedEvent.id);
+      if (res.ok) {
+        showToast({ title: "Success", description: "Event deleted successfully.", variant: "success" });
+        fetchEvents();
+      } else {
+        showToast({ title: "Error", description: res.message, variant: "error" });
       }
     } catch (err: any) {
       showToast({ title: "Error", description: err.message, variant: "error" });
@@ -272,6 +292,16 @@ export default function AdminEventsPage() {
                               <><StarOff className="mr-1.5 h-3.5 w-3.5" /> Unfeature</>
                             )}
                           </button>
+                          
+                          <button
+                            onClick={() => {
+                              setSelectedEvent(event);
+                              setActiveModal("DELETE");
+                            }}
+                            className="inline-flex h-8 items-center px-3 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                          >
+                            <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -359,6 +389,39 @@ export default function AdminEventsPage() {
                     <div>
                         <p className={cn("font-bold text-lg", !selectedEvent.isFeatured ? "text-amber-900" : "text-slate-900")}>{selectedEvent.title}</p>
                         <p className={cn("text-xs font-medium uppercase mt-1", !selectedEvent.isFeatured ? "text-amber-700" : "text-slate-600")}>{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            )}
+        </Modal>
+
+        <Modal
+            isOpen={activeModal === "DELETE"}
+            onClose={() => setActiveModal(null)}
+            title="Delete Event"
+            description="Are you sure you want to delete this event? This action cannot be undone."
+            variant="danger"
+            footer={
+                <>
+                    <Button variant="ghost" onClick={() => setActiveModal(null)} disabled={isActionLoading}>Cancel</Button>
+                    <Button 
+                        variant="primary" 
+                        onClick={handleDeleteEvent} 
+                        disabled={isActionLoading}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                        Delete Event
+                    </Button>
+                </>
+            }
+        >
+             {selectedEvent && (
+                <div className="flex items-center gap-4 p-5 rounded-2xl border bg-red-50 border-red-100">
+                    <div className="flex w-16 h-16 items-center justify-center rounded-xl bg-red-100 text-red-600 shadow-sm flex-shrink-0">
+                        <Trash2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-lg text-red-900">{selectedEvent.title}</p>
+                        <p className="text-xs font-medium uppercase mt-1 text-red-700">{new Date(selectedEvent.date).toLocaleDateString()}</p>
                     </div>
                 </div>
             )}

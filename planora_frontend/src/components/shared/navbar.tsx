@@ -65,27 +65,46 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {user?.role === "HOST" && (
+              <Link
+                href="/dashboard/host/events"
+                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+              >
+                Host Events
+              </Link>
+            )}
             {user?.role === "ADMIN" && (
-              <>
-                <Link
-                  href="/dashboard/admin/users"
-                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+              <div className="relative group/admin z-50">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
                 >
-                  Users
-                </Link>
-                <Link
-                  href="/dashboard/admin/events"
-                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
-                >
-                  Admin Events
-                </Link>
-                <Link
-                  href="/dashboard/admin/payments"
-                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
-                >
-                  Payments
-                </Link>
-              </>
+                  Admin Panel
+                  <svg className="h-4 w-4 transition-transform group-hover/admin:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute left-0 top-full mt-2 hidden w-48 flex-col gap-1 rounded-2xl border border-[var(--color-border)] bg-white/90 p-2 shadow-[0_10px_25px_rgba(15,23,42,0.1)] backdrop-blur-xl group-hover/admin:flex">
+                  <Link
+                    href="/dashboard/admin/users"
+                    className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-surface-100)] hover:text-[var(--color-brand-700)]"
+                  >
+                    Users
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/events"
+                    className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-surface-100)] hover:text-[var(--color-brand-700)]"
+                  >
+                    Admin Events
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/payments"
+                    className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-surface-100)] hover:text-[var(--color-brand-700)]"
+                  >
+                    Payments
+                  </Link>
+                </div>
+              </div>
             )}
           </nav>
 
@@ -160,30 +179,42 @@ export function Navbar() {
                   {item.label}
                 </Link>
               ))}
+              {user?.role === "HOST" && (
+                <Link
+                  href="/dashboard/host/events"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Host Events
+                </Link>
+              )}
               {user?.role === "ADMIN" && (
-                <>
+                <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-50)] p-3">
+                  <div className="mb-1 px-2 text-xs font-bold uppercase tracking-wider text-[var(--color-copy-muted)]">
+                    Admin Tools
+                  </div>
                   <Link
                     href="/dashboard/admin/users"
-                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--color-brand-700)] transition hover:bg-[var(--color-brand-50)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Users
                   </Link>
                   <Link
                     href="/dashboard/admin/events"
-                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--color-brand-700)] transition hover:bg-[var(--color-brand-50)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Admin Events
                   </Link>
                   <Link
                     href="/dashboard/admin/payments"
-                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--color-brand-700)] transition hover:bg-[var(--color-brand-50)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Payments
                   </Link>
-                </>
+                </div>
               )}
             </nav>
             <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4">

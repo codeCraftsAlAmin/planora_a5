@@ -352,6 +352,23 @@ export const eventService = {
       data: null as any,
     };
   },
+
+  createEvent: (formData: FormData) =>
+    apiFetch<BackendEvent>("/events/create", {
+      method: "POST",
+      body: formData,
+    }),
+
+  updateEvent: (id: string, formData: FormData) =>
+    apiFetch<BackendEvent>(`/events/update/${id}`, {
+      method: "PUT",
+      body: formData,
+    }),
+
+  deleteEvent: (id: string) =>
+    apiFetch<{ id: string; title: string }>(`/events/delete/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 export const eventRegisterService = {
