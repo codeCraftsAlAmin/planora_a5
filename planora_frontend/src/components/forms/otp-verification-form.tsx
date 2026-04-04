@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/api-service";
 
-
 const otpSchema = z.object({
   code: z.string().length(6, "Enter the full 6-digit code."),
 });
@@ -23,7 +22,7 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Please try again later.";
 }
 
-export function OtpVerificationForm() {
+function OtpVerificationForm() {
   const { showToast } = useToast();
   const { refetch } = useAuth();
   const router = useRouter();
@@ -89,10 +88,11 @@ export function OtpVerificationForm() {
 
       showToast({
         title: "Email verified!",
-        description: response.message || "You have successfully verified your email.",
+        description:
+          response.message || "You have successfully verified your email.",
         variant: "success",
       });
-      
+
       // Redirect to dashboard or login
       router.push("/dashboard");
     } catch (err: unknown) {
@@ -126,7 +126,8 @@ export function OtpVerificationForm() {
       setValue("code", "", { shouldValidate: false });
       showToast({
         title: "Code resent",
-        description: response.message || "A fresh OTP has been sent to your email.",
+        description:
+          response.message || "A fresh OTP has been sent to your email.",
         variant: "success",
       });
     } catch (err: unknown) {
@@ -137,8 +138,6 @@ export function OtpVerificationForm() {
       });
     }
   };
-
-
 
   return (
     <AuthShell
@@ -151,15 +150,22 @@ export function OtpVerificationForm() {
     >
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[var(--color-surface-950)]">Verification code</p>
+          <p className="text-sm font-semibold text-[var(--color-surface-950)]">
+            Verification code
+          </p>
           <InputOtp
             value={code}
             onChange={(nextValue) =>
-              setValue("code", nextValue, { shouldDirty: true, shouldValidate: true })
+              setValue("code", nextValue, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
             }
           />
           {errors.code ? (
-            <p className="text-sm text-[var(--color-danger-copy)]">{errors.code.message}</p>
+            <p className="text-sm text-[var(--color-danger-copy)]">
+              {errors.code.message}
+            </p>
           ) : (
             <p className="text-sm text-[var(--color-copy-muted)]">
               The code expires in 10 minutes for security.
@@ -175,7 +181,9 @@ export function OtpVerificationForm() {
                 Wait {secondsLeft}s before requesting a new code
               </>
             ) : (
-              <span className="text-[var(--color-brand-600)]">You can request a new code now</span>
+              <span className="text-[var(--color-brand-600)]">
+                You can request a new code now
+              </span>
             )}
           </p>
         </div>
@@ -185,5 +193,13 @@ export function OtpVerificationForm() {
         </Button>
       </form>
     </AuthShell>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OtpVerificationForm />
+    </Suspense>
   );
 }

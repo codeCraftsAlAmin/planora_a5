@@ -1,4 +1,4 @@
-import { ResetPasswordForm } from "@/components/forms/reset-password-form";
+import ResetPasswordForm from "@/components/forms/reset-password-form";
 import { Suspense } from "react";
 
 export const metadata = {

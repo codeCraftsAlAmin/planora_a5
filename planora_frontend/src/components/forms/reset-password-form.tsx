@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { InputOtp } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/api-service";
+import { Suspense } from "react";
 
 const resetPasswordSchema = z
   .object({
@@ -28,7 +29,7 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Please try again later.";
 }
 
-export function ResetPasswordForm() {
+function ResetPasswordForm() {
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,7 +83,8 @@ export function ResetPasswordForm() {
 
       showToast({
         title: "Account secured!",
-        description: "Your password has been successfully reset. Please sign in with your new credentials.",
+        description:
+          "Your password has been successfully reset. Please sign in with your new credentials.",
         variant: "success",
       });
 
@@ -113,7 +115,10 @@ export function ResetPasswordForm() {
           <InputOtp
             value={code}
             onChange={(nextValue) =>
-              setValue("code", nextValue, { shouldDirty: true, shouldValidate: true })
+              setValue("code", nextValue, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
             }
           />
           {errors.code && (
@@ -128,10 +133,10 @@ export function ResetPasswordForm() {
             <span className="text-sm font-semibold text-[var(--color-surface-950)]">
               New password
             </span>
-            <Input 
-              type="password" 
-              placeholder="Min. 8 characters" 
-              {...register("newPassword")} 
+            <Input
+              type="password"
+              placeholder="Min. 8 characters"
+              {...register("newPassword")}
             />
             {errors.newPassword && (
               <p className="text-sm text-[var(--color-danger-copy)]">
@@ -144,10 +149,10 @@ export function ResetPasswordForm() {
             <span className="text-sm font-semibold text-[var(--color-surface-950)]">
               Confirm password
             </span>
-            <Input 
-              type="password" 
-              placeholder="Repeat your password" 
-              {...register("confirmPassword")} 
+            <Input
+              type="password"
+              placeholder="Repeat your password"
+              {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
               <p className="text-sm text-[var(--color-danger-copy)]">
@@ -162,5 +167,13 @@ export function ResetPasswordForm() {
         </Button>
       </form>
     </AuthShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
