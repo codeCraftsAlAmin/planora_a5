@@ -180,6 +180,11 @@ const refreshTokenService = async (
     emailVerified: decodedToken.emailVerified,
   };
 
+  const user = await prisma.user.findUnique({ where: { id: decodedToken.id } });
+  if (!user || user.status === UserStatus.BANNED || user.isDeleted) {
+    throw new AppError(status.UNAUTHORIZED, "User no longer has access");
+  }
+
   // create access token
   const newAccessToken = tokenHelpers.createAccessToken(tokenPayload);
   // create refresh token
