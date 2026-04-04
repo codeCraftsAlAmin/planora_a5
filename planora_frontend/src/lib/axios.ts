@@ -91,6 +91,13 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Handle 403 Forbidden globally
+    if (error.response?.status === 403) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+    }
+
     return Promise.reject(error);
   },
 );

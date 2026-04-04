@@ -65,6 +65,28 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {user?.role === "ADMIN" && (
+              <>
+                <Link
+                  href="/dashboard/admin/users"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+                >
+                  Users
+                </Link>
+                <Link
+                  href="/dashboard/admin/events"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+                >
+                  Admin Events
+                </Link>
+                <Link
+                  href="/dashboard/admin/payments"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+                >
+                  Payments
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -138,6 +160,31 @@ export function Navbar() {
                   {item.label}
                 </Link>
               ))}
+              {user?.role === "ADMIN" && (
+                <>
+                  <Link
+                    href="/dashboard/admin/users"
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Users
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/events"
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Admin Events
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/payments"
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Payments
+                  </Link>
+                </>
+              )}
             </nav>
             <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4">
               {!isPending && isAuthenticated && user ? (

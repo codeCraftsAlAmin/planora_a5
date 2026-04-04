@@ -48,6 +48,7 @@ export interface EventItem {
   feeLabel: string;
   category: EventCategory;
   status: EventStatus;
+  isFeatured?: boolean;
   membersJoined: number;
   membersCapacity: number;
   coverTone: string;

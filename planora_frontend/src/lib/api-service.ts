@@ -1,3 +1,4 @@
+import axiosInstance from "./axios";
 import type { AuthUser } from "@/types";
 
 const BASE_URL =
@@ -160,18 +161,11 @@ export const authService = {
       body: JSON.stringify(data),
     }),
 
-  getAllUsers: (params?: QueryParams) => {
-    const filteredParams = Object.entries(params ?? {}).reduce<
-      Record<string, string>
-    >((accumulator, [key, value]) => {
-      if (value !== undefined) {
-        accumulator[key] = String(value);
-      }
-
-      return accumulator;
-    }, {});
-    const searchParams = new URLSearchParams(filteredParams).toString();
-    return apiFetch<unknown>(`/users/?${searchParams}`);
+  getAllUsers: async (params?: QueryParams) => {
+    const res = await axiosInstance.get<ApiResponse<AuthUser[]>>("/users/", {
+      params,
+    });
+    return res.data;
   },
 
   changePassword: (data: ChangePasswordPayload) =>
@@ -180,6 +174,48 @@ export const authService = {
       body: JSON.stringify(data),
     }),
 };
+
+export const adminService = {
+  deleteUser: async (id: string) => {
+    const res = await axiosInstance.delete(`/admin/delete/user/${id}`);
+    return res.data;
+  },
+
+  updateUserStatus: async (id: string, status: string) => {
+    const res = await axiosInstance.put(`/admin/ban/user/${id}`, { status });
+    return res.data;
+  },
+
+  updateUserRole: async (id: string, role: string) => {
+    const res = await axiosInstance.put(`/admin/update/role`, { id, role });
+    return res.data;
+  },
+
+  updateFeaturedEvent: async (id: string, isFeatured: boolean) => {
+    const res = await axiosInstance.put(`/admin/update/featured/${id}`, { isFeatured });
+    return res.data;
+  },
+
+  getAllPayments: async () => {
+    const res = await axiosInstance.get(`/admin/payments`);
+    return res.data;
+  },
+};
+
+export interface BackendPayment {
+  id: string;
+  amount: number;
+  status: string;
+  transactionId: string | null;
+  invoiceUrl: string | null;
+  eventId: string;
+  userId: string;
+  createdAt: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+}
 
 export interface BackendEvent {
   id: string;
@@ -264,6 +300,7 @@ export function mapBackendEventToFrontend(
     feeLabel: event.fee > 0 ? `৳${event.fee}` : "Free",
     category: "community", // Default category since backend lacks it
     status: event.status,
+    isFeatured: event.isFeatured,
     membersJoined: event.totalMembers,
     membersCapacity: event.maxMembers,
     coverTone: "from-[#0b5f52] via-[#187d68] to-[#f2cc73]", // Default tone
