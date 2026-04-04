@@ -12,6 +12,7 @@ import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { sendEmail } from "../../utils/email";
 import { envVars } from "../../config/env";
 import stripe from "../../config/stripe.config";
+import { waitUntil } from "@vercel/functions";
 
 const sendInvitation = async (
   user: IRequestUserInterface,
@@ -98,17 +99,19 @@ const sendInvitation = async (
   });
 
   // TODO: send email to user
-  await sendEmail({
-    to: invitee.email,
-    subject: `Special Invitation: ${event.title}`,
-    templateName: "invitation",
-    templateData: {
-      inviteeName: invitee.name,
-      inviterName: inviter.name,
-      eventName: event.title,
-      eventLink: `${envVars.FRONTEND_URL}/events/${eventId}?invitation=true`,
-    },
-  });
+  waitUntil(
+    sendEmail({
+      to: invitee.email,
+      subject: `Special Invitation: ${event.title}`,
+      templateName: "invitation",
+      templateData: {
+        inviteeName: invitee.name,
+        inviterName: inviter.name,
+        eventName: event.title,
+        eventLink: `${envVars.FRONTEND_URL}/events/${eventId}?invitation=true`,
+      },
+    }),
+  );
 
   return result;
 };

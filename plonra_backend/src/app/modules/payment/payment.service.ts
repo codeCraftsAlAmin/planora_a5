@@ -12,6 +12,7 @@ import {
 import { uploadFileToCloudinary } from "../../config/cloudinary.config";
 import { generateInvoicePdf } from "./payment.utils";
 import { sendEmail } from "../../utils/email";
+import { waitUntil } from "@vercel/functions";
 
 const handlePaymentWebhook = async (event: Stripe.Event) => {
   // find payment data
@@ -185,28 +186,30 @@ const handlePaymentWebhook = async (event: Stripe.Event) => {
         // TODO: send email to user with invoice pdf
         if (session.payment_status === "paid" && invoiceUrl) {
           try {
-            await sendEmail({
-              to: paymentData.user.email,
-              subject: `Payment Confirmation & Invoice - Appointment with ${eventData.title}`,
-              templateName: "invoice",
-              templateData: {
-                userName: paymentData.user.name,
-                invoiceId: paymentId,
-                transactionId: session.id,
-                eventName: eventData.title,
-                eventDate: new Date(eventData.date).toISOString(),
-                amount: paymentData.amount,
-                paymentDate: new Date().toISOString(),
-                invoiceUrl: invoiceUrl,
-              },
-              attachments: [
-                {
-                  fileName: `invoice-${paymentId}.pdf`,
-                  content: pdfBuffer || Buffer.from("Invoice not found"),
-                  contentType: "application/pdf",
+            waitUntil(
+              sendEmail({
+                to: paymentData.user.email,
+                subject: `Payment Confirmation & Invoice - Appointment with ${eventData.title}`,
+                templateName: "invoice",
+                templateData: {
+                  userName: paymentData.user.name,
+                  invoiceId: paymentId,
+                  transactionId: session.id,
+                  eventName: eventData.title,
+                  eventDate: new Date(eventData.date).toISOString(),
+                  amount: paymentData.amount,
+                  paymentDate: new Date().toISOString(),
+                  invoiceUrl: invoiceUrl,
                 },
-              ],
-            });
+                attachments: [
+                  {
+                    fileName: `invoice-${paymentId}.pdf`,
+                    content: pdfBuffer || Buffer.from("Invoice not found"),
+                    contentType: "application/pdf",
+                  },
+                ],
+              }),
+            );
             console.log(`✅ Invoice email sent to ${paymentData.user.email}`);
           } catch (error) {
             console.error("❌ Error sending email:", error);

@@ -2,7 +2,7 @@ import { Server } from "http";
 import app from "./app";
 import { envVars } from "./app/config/env";
 
-const port = envVars.PORT;
+const port = envVars.PORT || 5000;
 
 let server: Server;
 
