@@ -196,6 +196,12 @@ const getAllPaymentsService = async () => {
       eventId: true,
       userId: true,
       createdAt: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
