@@ -267,7 +267,6 @@ const updateMyEventService = async (
 
   const userToInform = users.map((user) => ({
     userId: user.userId,
-    eventId: id,
     type: NotificationType.EVENT_UPDATED,
     message: `Event "${eventData.title}" has been updated. Check it out`,
   }));
