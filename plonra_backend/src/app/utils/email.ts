@@ -5,9 +5,6 @@ import AppError from "../middleware/appError";
 import status from "http-status";
 import { templates } from "./templates";
 
-// Create a fresh transporter per invocation — required for serverless (Vercel)
-// Do NOT use pool:true; pooled connections are killed between serverless invocations
-
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -36,8 +33,6 @@ export const sendEmail = async ({
   attachments,
 }: ISendEmailOptions) => {
   try {
-    // Use inlined template strings instead of reading from the filesystem.
-    // ejs.renderFile() uses process.cwd() which resolves incorrectly on Vercel serverless.
     const templateString = templates[templateName];
     if (!templateString) {
       throw new AppError(

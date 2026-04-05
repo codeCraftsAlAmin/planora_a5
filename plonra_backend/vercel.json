@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "**/*.{js,ts}": {
-      "includeFiles": "src/app/templates/**"
-    }
-  }
-}

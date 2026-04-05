@@ -94,7 +94,6 @@ export const auth = betterAuth({
 
           // no need to send verification for admin
           if (user.role === Role.ADMIN) return;
-          console.log("Sending email to verification", email);
           waitUntil(
             sendEmail({
               to: email,
