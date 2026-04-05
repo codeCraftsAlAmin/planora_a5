@@ -1,6 +1,6 @@
 {
   "functions": {
-    "src/**/*.ts": {
+    "**/*.{js,ts}": {
       "includeFiles": "src/app/templates/**"
     }
   }

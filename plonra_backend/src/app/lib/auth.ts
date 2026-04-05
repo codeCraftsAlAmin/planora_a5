@@ -7,8 +7,7 @@ import { sendEmail } from "../utils/email";
 import AppError from "../middleware/appError";
 import status from "http-status";
 import { envVars } from "../config/env";
-import { waitUntil } from "@vercel/functions"; // used by backgroundTasks.handler below
-
+import { waitUntil } from "@vercel/functions";
 
 export const auth = betterAuth({
   baseUrl: envVars.BETTER_AUTH_URL,
