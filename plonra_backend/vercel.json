@@ -1,6 +1,6 @@
 {
   "functions": {
-    "src/app/api/**/*": {
+    "src/**/*.ts": {
       "includeFiles": "src/app/templates/**"
     }
   }
