@@ -94,6 +94,7 @@ export const auth = betterAuth({
 
           // no need to send verification for admin
           if (user.role === Role.ADMIN) return;
+          console.log("Sending email to verification", email);
           waitUntil(
             sendEmail({
               to: email,
@@ -118,7 +119,7 @@ export const auth = betterAuth({
           if (!user) {
             throw new AppError(status.NOT_FOUND, "User not found");
           }
-
+          console.log("Sending email to forget password", email);
           waitUntil(
             sendEmail({
               to: email,
