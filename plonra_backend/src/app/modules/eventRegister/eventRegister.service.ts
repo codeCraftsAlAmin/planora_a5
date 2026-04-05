@@ -214,8 +214,8 @@ const createEventRegisterService = async (
         eventId: eventData.id,
       },
 
-      success_url: `${envVars.FRONTEND_URL}/dashboard/payment/payment-success`,
-      cancel_url: `${envVars.FRONTEND_URL}/dashboard/appointments`,
+      success_url: `${envVars.FRONTEND_URL}/dashboard?payment=success&eventId=${eventData.id}`,
+      cancel_url: `${envVars.FRONTEND_URL}/dashboard?payment=cancelled&eventId=${eventData.id}`,
     });
 
     return {
@@ -242,18 +242,31 @@ const cancelUnpaidRegistration = async () => {
 
   if (unpaidRegistrations.length === 0) return;
 
-  // get all registration id
   const unpaidRegistrationsId = unpaidRegistrations.map(
     (registration) => registration.id,
   );
 
-  // get all user id
   const unpaidRegistrationsUserId = unpaidRegistrations.map(
     (registration) => registration.userId,
   );
 
+  const unpaidPayments = await prisma.payments.findMany({
+    where: {
+      status: PaymentStatus.UNPAID,
+      createdAt: {
+        lt: thirtyMinsAgo,
+      },
+      OR: unpaidRegistrations.map((registration) => ({
+        eventId: registration.eventId,
+        userId: registration.userId,
+      })),
+    },
+    select: {
+      id: true,
+    },
+  });
+
   await prisma.$transaction(async (tx) => {
-    // delete all registrations
     await tx.eventsRegistrations.deleteMany({
       where: {
         id: {
@@ -262,24 +275,17 @@ const cancelUnpaidRegistration = async () => {
       },
     });
 
-    // delete all payments
-    await tx.payments.deleteMany({
-      where: {
-        eventId: {
-          in: unpaidRegistrations.map((registration) => registration.eventId),
+    if (unpaidPayments.length > 0) {
+      await tx.payments.deleteMany({
+        where: {
+          id: {
+            in: unpaidPayments.map((payment) => payment.id),
+          },
         },
-        userId: {
-          in: unpaidRegistrations.map((registration) => registration.userId),
-        },
-        status: PaymentStatus.UNPAID,
-        createdAt: {
-          lt: thirtyMinsAgo,
-        },
-      },
-    });
+      });
+    }
 
-    // send notifications to users
-    await prisma.notification.createMany({
+    await tx.notification.createMany({
       data: unpaidRegistrationsUserId.map((id) => ({
         userId: id,
         type: NotificationType.PAYMENT_FAILED,
@@ -291,38 +297,74 @@ const cancelUnpaidRegistration = async () => {
 };
 
 const getAllEventRegistrationsService = async (user: IRequestUserInterface) => {
-  let result;
+  const registrationSelect = {
+    id: true,
+    status: true,
+    paymentStatus: true,
+    eventId: true,
+    userId: true,
+    createdAt: true,
+    updatedAt: true,
+    user: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    },
+    event: {
+      select: {
+        id: true,
+        title: true,
+        date: true,
+        time: true,
+        venue: true,
+        fee: true,
+        type: true,
+        totalMembers: true,
+        maxMembers: true,
+        organizerId: true,
+      },
+    },
+  } as const;
 
   if (user.role === Role.USER) {
-    result = await prisma.eventsRegistrations.findMany({
+    return prisma.eventsRegistrations.findMany({
       where: {
         userId: user.userId,
       },
-      include: {
+      select: registrationSelect,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  if (user.role === Role.HOST) {
+    return prisma.eventsRegistrations.findMany({
+      where: {
         event: {
-          select: {
-            id: true,
-            title: true,
-            date: true,
-            time: true,
-            venue: true,
-            fee: true,
-            type: true,
-            totalMembers: true,
-          },
+          organizerId: user.userId,
         },
+      },
+      select: registrationSelect,
+      orderBy: {
+        createdAt: "desc",
       },
     });
   }
 
   if (user.role === Role.ADMIN) {
-    result = await prisma.eventsRegistrations.findMany({
-      include: {
-        event: true,
+    return prisma.eventsRegistrations.findMany({
+      select: registrationSelect,
+      orderBy: {
+        createdAt: "desc",
       },
     });
   }
-  return result;
+
+  return [];
 };
 
 const updateRegistrationService = async (
@@ -457,7 +499,7 @@ const refundRegistrationService = async (
     throw new AppError(status.NOT_FOUND, "Event not found");
   }
 
-  if (eventData.organizerId !== user.userId) {
+  if (user.role === Role.HOST && eventData.organizerId !== user.userId) {
     throw new AppError(
       status.UNAUTHORIZED,
       "You are not the organizer of this event",

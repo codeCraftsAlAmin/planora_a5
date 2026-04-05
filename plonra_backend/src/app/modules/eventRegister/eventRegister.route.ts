@@ -15,7 +15,7 @@ router.post(
 // get all event registrations
 router.get(
   "/",
-  checkAuth(Role.USER, Role.ADMIN),
+  checkAuth(Role.USER, Role.ADMIN, Role.HOST),
   eventRegisterController.getAllEventRegistrationsController,
 );
 
