@@ -94,16 +94,17 @@ export const auth = betterAuth({
 
           // no need to send verification for admin
           if (user.role === Role.ADMIN) return;
-
-          await sendEmail({
-            to: email,
-            subject: "Email Verification",
-            templateName: "otp",
-            templateData: {
-              name: user.name,
-              otp,
-            },
-          });
+          waitUntil(
+            sendEmail({
+              to: email,
+              subject: "Email Verification",
+              templateName: "otp",
+              templateData: {
+                name: user.name,
+                otp,
+              },
+            }),
+          );
         }
 
         if (type === "forget-password") {
@@ -118,15 +119,17 @@ export const auth = betterAuth({
             throw new AppError(status.NOT_FOUND, "User not found");
           }
 
-          await sendEmail({
-            to: email,
-            subject: "Forget Password",
-            templateName: "otp",
-            templateData: {
-              name: user.name,
-              otp,
-            },
-          });
+          waitUntil(
+            sendEmail({
+              to: email,
+              subject: "Forget Password",
+              templateName: "otp",
+              templateData: {
+                name: user.name,
+                otp,
+              },
+            }),
+          );
         }
       },
       expiresIn: 60 * 2, // 2mins

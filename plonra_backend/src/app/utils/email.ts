@@ -7,19 +7,14 @@ import status from "http-status";
 
 // Create a fresh transporter per invocation — required for serverless (Vercel)
 // Do NOT use pool:true; pooled connections are killed between serverless invocations
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host: envVars.SMTP_HOST,
-    port: Number(envVars.SMTP_PORT),
-    secure: true,
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
     auth: {
-      user: envVars.SMTP_USER,
-      pass: envVars.SMTP_PASS,
-    },
-    connectionTimeout: 8000, // 8s — stay within Vercel's 10s limit
-    greetingTimeout: 8000,
-    socketTimeout: 8000,
-  });
+        user: envVars.SMTP_USER,
+        pass: envVars.SMTP_PASS
+    }
+})
 
 interface ISendEmailOptions {
   to: string;
@@ -50,9 +45,6 @@ export const sendEmail = async ({
     );
 
     const html = await ejs.renderFile(templatePath, templateData);
-
-    // Create a fresh transporter per call — safe for serverless
-    const transporter = createTransporter();
 
     const info = await transporter.sendMail({
       from: envVars.SMTP_EMAIL_SENDER,
