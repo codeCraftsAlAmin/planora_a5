@@ -9,11 +9,13 @@ import status from "http-status";
 const transporter = nodemailer.createTransport({
   host: envVars.SMTP_HOST,
   port: Number(envVars.SMTP_PORT),
-  secure: false,
+  secure: true,
   auth: {
     user: envVars.SMTP_USER,
     pass: envVars.SMTP_PASS,
   },
+  pool: true,
+  maxConnections: 1,
 });
 
 interface ISendEmailOptions {
@@ -36,12 +38,17 @@ export const sendEmail = async ({
   attachments,
 }: ISendEmailOptions) => {
   try {
-    const templatePath = path.resolve(
+    const templatePath = path.join(
       process.cwd(),
-      `src/app/templates/${templateName}.ejs`,
+      "src",
+      "app",
+      "templates",
+      `${templateName}.ejs`,
     );
 
     const html = await ejs.renderFile(templatePath, templateData);
+
+    await transporter.verify();
 
     const info = await transporter.sendMail({
       from: envVars.SMTP_EMAIL_SENDER,

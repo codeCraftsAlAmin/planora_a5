@@ -27,7 +27,7 @@ app.set("query parser", (str: string) => qs.parse(str));
 
 // for ejs
 app.set("view engine", "ejs");
-app.set("views", path.resolve(process.cwd(), `src/app/templates`));
+app.set("views", path.join(process.cwd(), "src", "app", "templates"));
 
 // for stripe webhook
 app.use(
