@@ -1,20 +1,20 @@
 import nodemailer from "nodemailer";
 import { envVars } from "../config/env";
-import path from "path";
 import ejs from "ejs";
 import AppError from "../middleware/appError";
 import status from "http-status";
+import { templates } from "./templates";
 
 // Create a fresh transporter per invocation — required for serverless (Vercel)
 // Do NOT use pool:true; pooled connections are killed between serverless invocations
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: envVars.SMTP_USER,
-        pass: envVars.SMTP_PASS
-    }
-})
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: envVars.SMTP_USER,
+    pass: envVars.SMTP_PASS,
+  },
+});
 
 interface ISendEmailOptions {
   to: string;
@@ -36,15 +36,17 @@ export const sendEmail = async ({
   attachments,
 }: ISendEmailOptions) => {
   try {
-    const templatePath = path.join(
-      process.cwd(),
-      "src",
-      "app",
-      "templates",
-      `${templateName}.ejs`,
-    );
+    // Use inlined template strings instead of reading from the filesystem.
+    // ejs.renderFile() uses process.cwd() which resolves incorrectly on Vercel serverless.
+    const templateString = templates[templateName];
+    if (!templateString) {
+      throw new AppError(
+        status.INTERNAL_SERVER_ERROR,
+        `Email template "${templateName}" not found`,
+      );
+    }
 
-    const html = await ejs.renderFile(templatePath, templateData);
+    const html = ejs.render(templateString, templateData);
 
     const info = await transporter.sendMail({
       from: envVars.SMTP_EMAIL_SENDER,
