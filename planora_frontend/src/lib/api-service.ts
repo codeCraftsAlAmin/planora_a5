@@ -242,6 +242,34 @@ export interface BackendEvent {
   eventsRegistrations?: any[];
 }
 
+export interface BackendEventRegistration {
+  id: string;
+  status: "PROCESSING" | "APPROVED" | "REJECTED" | "BANNED";
+  paymentStatus: "PAID" | "UNPAID" | "FREE";
+  eventId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+  };
+  event: {
+    id: string;
+    title: string;
+    date: string;
+    time: string;
+    venue: string;
+    fee: number;
+    type: "PUBLIC" | "PRIVATE";
+    totalMembers: number;
+    maxMembers: number;
+    organizerId: string;
+  };
+}
+
 export interface Review {
   id: string;
   rating: number;
@@ -380,7 +408,24 @@ export const eventRegisterService = {
       },
     ),
 
-  getMyRegistrations: () => apiFetch<any[]>("/event-register"),
+  getMyRegistrations: () => apiFetch<BackendEventRegistration[]>("/event-register"),
+
+  getAllRegistrations: () =>
+    apiFetch<BackendEventRegistration[]>("/event-register"),
+
+  updateRegistration: (
+    id: string,
+    status: "APPROVED" | "REJECTED" | "BANNED",
+  ) =>
+    apiFetch<BackendEventRegistration>(`/event-register/update/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    }),
+
+  refundRegistration: (eventId: string) =>
+    apiFetch<unknown>(`/event-register/refund/${eventId}`, {
+      method: "PUT",
+    }),
 };
 
 export const reviewsService = {

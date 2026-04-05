@@ -65,13 +65,29 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            {user?.role === "HOST" && (
+            {user?.role === "USER" && (
               <Link
-                href="/dashboard/host/events"
+                href="/dashboard/registrations"
                 className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
               >
-                Host Events
+                My Registrations
               </Link>
+            )}
+            {user?.role === "HOST" && (
+              <>
+                <Link
+                  href="/dashboard/host/events"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+                >
+                  Host Events
+                </Link>
+                <Link
+                  href="/dashboard/host/registrations"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-brand-600)] transition hover:bg-[var(--color-brand-50)]"
+                >
+                  Registrations
+                </Link>
+              </>
             )}
             {user?.role === "ADMIN" && (
               <div className="relative group/admin z-50">
@@ -96,6 +112,12 @@ export function Navbar() {
                     className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-surface-100)] hover:text-[var(--color-brand-700)]"
                   >
                     Admin Events
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/registrations"
+                    className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-surface-100)] hover:text-[var(--color-brand-700)]"
+                  >
+                    Registrations
                   </Link>
                   <Link
                     href="/dashboard/admin/payments"
@@ -179,14 +201,32 @@ export function Navbar() {
                   {item.label}
                 </Link>
               ))}
-              {user?.role === "HOST" && (
+              {user?.role === "USER" && (
                 <Link
-                  href="/dashboard/host/events"
+                  href="/dashboard/registrations"
                   className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Host Events
+                  My Registrations
                 </Link>
+              )}
+              {user?.role === "HOST" && (
+                <>
+                  <Link
+                    href="/dashboard/host/events"
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Host Events
+                  </Link>
+                  <Link
+                    href="/dashboard/host/registrations"
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-[var(--color-brand-700)] bg-[var(--color-brand-50)] transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Registrations
+                  </Link>
+                </>
               )}
               {user?.role === "ADMIN" && (
                 <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-50)] p-3">
@@ -206,6 +246,13 @@ export function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Admin Events
+                  </Link>
+                  <Link
+                    href="/dashboard/admin/registrations"
+                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--color-brand-700)] transition hover:bg-[var(--color-brand-50)]"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Registrations
                   </Link>
                   <Link
                     href="/dashboard/admin/payments"
