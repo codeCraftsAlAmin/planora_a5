@@ -50,6 +50,12 @@ export interface ChangePasswordPayload {
 
 type QueryParams = Record<string, string | number | boolean | undefined>;
 
+export type InvitationStatus =
+  | "PENDING"
+  | "INTERESTED"
+  | "ACCEPTED"
+  | "REJECTED";
+
 function getErrorMessage(body: unknown) {
   if (
     body &&
@@ -302,6 +308,31 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface BackendInvitation {
+  id: string;
+  status: InvitationStatus;
+  eventId: string;
+  inviterId: string;
+  inviteeId: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface AdminInvitation {
+  id: string;
+  status: InvitationStatus;
+  createdAt: string;
+  event: {
+    id: string;
+    title: string;
+    date: string;
+    time: string;
+    venue: string;
+    fee: number;
+    status: BackendEvent["status"];
+  };
+}
+
 export function mapBackendEventToFrontend(
   event: BackendEvent,
 ): import("@/types").EventItem {
@@ -426,6 +457,29 @@ export const eventRegisterService = {
     apiFetch<unknown>(`/event-register/refund/${eventId}`, {
       method: "PUT",
     }),
+};
+
+export const invitationService = {
+  sendInvitation: (data: { eventId: string; inviteeId: string }) =>
+    apiFetch<BackendInvitation>("/invitations/send", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  acceptInvitation: (eventId: string) =>
+    apiFetch<{ result: unknown; paymentUrl: string | null }>(
+      `/invitations/accept/${eventId}`,
+      {
+        method: "POST",
+      },
+    ),
+
+  rejectInvitation: (eventId: string) =>
+    apiFetch<BackendInvitation>(`/invitations/reject/${eventId}`, {
+      method: "POST",
+    }),
+
+  getAllInvitations: () => apiFetch<AdminInvitation[]>("/invitations/"),
 };
 
 export const reviewsService = {

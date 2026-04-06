@@ -1,4 +1,19 @@
 export type UserRole = "ADMIN" | "USER" | "HOST";
+export type InvitationStatus =
+  | "PENDING"
+  | "INTERESTED"
+  | "ACCEPTED"
+  | "REJECTED";
+
+export interface UserInvitation {
+  id: string;
+  status: InvitationStatus;
+  eventId: string;
+  inviterId: string;
+  inviteeId: string;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 export interface AuthUser {
   id: string;
@@ -11,6 +26,11 @@ export interface AuthUser {
   gender?: "MALE" | "FEMALE" | "OTHER";
   image?: string;
   emailVerified?: boolean;
+  status?: string;
+  createdAt?: string;
+  events?: Array<{ id: string }>;
+  invitationsSent?: UserInvitation[];
+  invitationsRecieved?: UserInvitation[];
 }
 
 
