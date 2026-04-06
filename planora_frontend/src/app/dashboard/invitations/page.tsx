@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   CheckCircle2,
+  Clock3,
   RefreshCw,
   Ticket,
   Wallet,
@@ -40,6 +41,39 @@ function getInvitationTone(status: UserInvitation["status"]) {
   if (status === "REJECTED") return "bg-red-50 text-red-700";
   if (status === "INTERESTED") return "bg-sky-50 text-sky-700";
   return "bg-amber-50 text-amber-700";
+}
+
+function getInvitationActionConfig(status: UserInvitation["status"]) {
+  if (status === "ACCEPTED") {
+    return {
+      label: "Accepted",
+      icon: CheckCircle2,
+      variant: "primary" as const,
+      className: "bg-emerald-600 hover:bg-emerald-600",
+    };
+  }
+
+  if (status === "REJECTED") {
+    return {
+      label: "Rejected",
+      icon: XCircle,
+      variant: "outline" as const,
+      className:
+        "border-red-200 bg-red-50 text-red-700 hover:border-red-200 hover:text-red-700",
+    };
+  }
+
+  if (status === "INTERESTED") {
+    return {
+      label: "Payment Pending",
+      icon: Clock3,
+      variant: "outline" as const,
+      className:
+        "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-200 hover:text-sky-700",
+    };
+  }
+
+  return null;
 }
 
 function MetricCard({
@@ -282,6 +316,7 @@ export default function UserInvitationsPage() {
                   const isPending = invitation.status === "PENDING";
                   const acceptLoading = isActionLoading === `accept-${invitation.eventId}`;
                   const rejectLoading = isActionLoading === `reject-${invitation.eventId}`;
+                  const actionState = getInvitationActionConfig(invitation.status);
 
                   return (
                     <article
@@ -331,23 +366,36 @@ export default function UserInvitationsPage() {
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <Button
-                              onClick={() => handleAccept(invitation.eventId)}
-                              disabled={!isPending || !!isActionLoading}
-                              className="rounded-2xl"
-                            >
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              {acceptLoading ? "Accepting..." : "Accept"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleReject(invitation.eventId)}
-                              disabled={!isPending || !!isActionLoading}
-                              className="rounded-2xl"
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              {rejectLoading ? "Declining..." : "Reject"}
-                            </Button>
+                            {isPending ? (
+                              <>
+                                <Button
+                                  onClick={() => handleAccept(invitation.eventId)}
+                                  disabled={!!isActionLoading}
+                                  className="rounded-2xl"
+                                >
+                                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                                  {acceptLoading ? "Accepting..." : "Accept"}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => handleReject(invitation.eventId)}
+                                  disabled={!!isActionLoading}
+                                  className="rounded-2xl"
+                                >
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  {rejectLoading ? "Declining..." : "Reject"}
+                                </Button>
+                              </>
+                            ) : actionState ? (
+                              <Button
+                                variant={actionState.variant}
+                                disabled
+                                className={`rounded-2xl ${actionState.className}`}
+                              >
+                                <actionState.icon className="mr-2 h-4 w-4" />
+                                {actionState.label}
+                              </Button>
+                            ) : null}
                           </div>
                         </div>
                       </div>

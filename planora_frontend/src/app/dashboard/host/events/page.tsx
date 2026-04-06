@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { cn } from "@/lib/utils";
 
 export default function HostEventsPage() {
   const router = useRouter();
@@ -41,6 +40,7 @@ export default function HostEventsPage() {
     time: "",
     venue: "",
     type: "PUBLIC",
+    status: "UPCOMING",
     description: "",
     fee: "0",
   });
@@ -99,6 +99,7 @@ export default function HostEventsPage() {
       time: "",
       venue: "",
       type: "PUBLIC",
+      status: "UPCOMING",
       description: "",
       fee: "0",
     });
@@ -119,6 +120,7 @@ export default function HostEventsPage() {
       time: event.time,
       venue: event.venue,
       type: event.type,
+      status: event.status,
       description: event.description || "",
       fee: event.fee.toString(),
     });
@@ -245,7 +247,7 @@ export default function HostEventsPage() {
                 <CalendarDays className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-serif font-bold text-[var(--color-surface-950)]">No events hosted yet</h3>
-              <p className="text-[var(--color-copy-muted)]">Click 'Create Event' above to start your first community gathering.</p>
+              <p className="text-[var(--color-copy-muted)]">Click &apos;Create Event&apos; above to start your first community gathering.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -286,7 +288,18 @@ export default function HostEventsPage() {
                         <p className="text-xs text-[var(--color-copy-muted)]">{event.time}</p>
                       </td>
                       <td className="px-6 py-5">
-                        <Badge variant={event.status === "CANCELLED" ? "secondary" : "success"} className={event.status === "UPCOMING" ? "bg-amber-100 text-amber-800" : ""}>
+                        <Badge
+                          variant={event.status === "CANCELLED" ? "secondary" : "success"}
+                          className={
+                            event.status === "UPCOMING"
+                              ? "bg-amber-100 text-amber-800"
+                              : event.status === "ONGOING"
+                                ? "bg-sky-100 text-sky-800"
+                                : event.status === "COMPLETED"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : ""
+                          }
+                        >
                             {event.status}
                         </Badge>
                       </td>
@@ -393,6 +406,26 @@ export default function HostEventsPage() {
                             <option value="PUBLIC">Public</option>
                             <option value="PRIVATE">Private</option>
                         </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold">Event Status</label>
+                        <select
+                            name="status"
+                            value={formData.status}
+                            onChange={handleInputChange}
+                            disabled={activeModal === "CREATE"}
+                            className="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] disabled:cursor-not-allowed disabled:bg-slate-50"
+                        >
+                            <option value="UPCOMING">Upcoming</option>
+                            <option value="ONGOING">Ongoing</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                        <p className="text-xs text-[var(--color-copy-muted)]">
+                            {activeModal === "EDIT"
+                              ? "Status is included in the update request for existing events."
+                              : "New events are created as upcoming."}
+                        </p>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-semibold">Fee (৳)</label>
