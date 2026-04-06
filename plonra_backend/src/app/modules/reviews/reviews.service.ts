@@ -1,14 +1,18 @@
 import { ICreateReview } from "./reviews.interface";
 import { IRequestUserInterface } from "../../interface/requestUserInterface";
 import { prisma } from "../../lib/prisma";
-import { NotificationType, Role, UserStatus } from "../../../generated/prisma/enums";
+import {
+  NotificationType,
+  Role,
+  UserStatus,
+} from "../../../generated/prisma/enums";
 import AppError from "../../middleware/appError";
 import status from "http-status";
 
 const createReview = async (
   user: IRequestUserInterface,
   payload: ICreateReview,
-  eventId: string
+  eventId: string,
 ) => {
   const { comment, rating } = payload;
 
@@ -207,7 +211,7 @@ const deleteComment = async (user: IRequestUserInterface, id: string) => {
     },
     select: {
       id: true,
-      eventId: true
+      eventId: true,
     },
   });
 
@@ -224,9 +228,16 @@ const replyComment = async (
       id,
     },
     include: {
+      user:{
+        select: {
+          id: true,
+          name: true,
+        }
+      },
       event: {
         select: {
           organizerId: true,
+          title: true,
         },
       },
     },
@@ -236,10 +247,10 @@ const replyComment = async (
     throw new AppError(status.NOT_FOUND, "Review not found");
   }
 
-
-  console.log("user" , user)
-
-  if (user.role === Role.HOST && existingReview.event.organizerId !== user.userId) {
+  if (
+    user.role === Role.HOST &&
+    existingReview.event.organizerId !== user.userId
+  ) {
     throw new AppError(
       status.FORBIDDEN,
       "You are not authorized to reply to this review",
@@ -262,6 +273,17 @@ const replyComment = async (
       },
     },
   });
+
+  // send notification to the user if comment is not empty
+  if (comment) {
+    await prisma.notification.create({
+      data: {
+        userId: existingReview.user.id,
+        type: NotificationType.REVIEW_POSTED,
+        message: `${existingReview.user.name} has replied to your comment on ${existingReview.event.title}`,
+      },
+    });
+  }
 
   return result;
 };
