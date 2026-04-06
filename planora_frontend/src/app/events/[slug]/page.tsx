@@ -213,6 +213,7 @@ export default function EventDetailsPage({
             userVerified={user?.emailVerified || false}
             userId={user?.id}
             organizerId={event.organizerId || ""}
+            canRate={event.status === "COMPLETED"}
           />
         </section>
       </MainWrapper>

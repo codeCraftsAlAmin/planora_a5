@@ -281,6 +281,7 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  updatedAt?: string;
   userId: string;
   eventId: string;
   user?: {
@@ -487,6 +488,17 @@ export const reviewsService = {
     apiFetch<Review>(`/reviews/create/${eventId}`, {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+
+  updateReview: (reviewId: string, comment: string) =>
+    apiFetch<Review>(`/reviews/update/${reviewId}`, {
+      method: "PUT",
+      body: JSON.stringify({ comment }),
+    }),
+
+  deleteReview: (reviewId: string) =>
+    apiFetch<null>(`/reviews/delete/${reviewId}`, {
+      method: "DELETE",
     }),
 
   replyComment: (parentId: string, comment: string) =>
