@@ -287,8 +287,8 @@ const acceptInvitation = async (
         eventId: invitation.eventId,
       },
 
-      success_url: `${envVars.FRONTEND_URL}/dashboard/payment/payment-success`,
-      cancel_url: `${envVars.FRONTEND_URL}/dashboard/appointments`,
+      success_url: `${envVars.FRONTEND_URL}/dashboard?payment=success&eventId=${invitation.eventId}`,
+      cancel_url: `${envVars.FRONTEND_URL}/dashboard?payment=cancelled&eventId=${invitation.eventId}`,
     });
 
     return {
