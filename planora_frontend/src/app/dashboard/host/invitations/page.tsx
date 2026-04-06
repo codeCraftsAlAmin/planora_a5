@@ -77,7 +77,7 @@ export default function HostInvitationsPage() {
   const [events, setEvents] = useState<BackendEvent[]>([]);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
+  const [sendingInviteeId, setSendingInviteeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -184,7 +184,7 @@ export default function HostInvitationsPage() {
     }
 
     try {
-      setIsSending(true);
+      setSendingInviteeId(inviteeId);
       const response = await invitationService.sendInvitation({
         eventId: selectedEventId,
         inviteeId,
@@ -208,7 +208,7 @@ export default function HostInvitationsPage() {
         variant: "error",
       });
     } finally {
-      setIsSending(false);
+      setSendingInviteeId(null);
     }
   };
 
@@ -315,6 +315,7 @@ export default function HostInvitationsPage() {
                 {filteredUsers.map((user) => {
                   const invitationKey = `${selectedEventId}:${user.id}`;
                   const alreadyInvited = existingInvitationKeys.has(invitationKey);
+                  const isSendingThisUser = sendingInviteeId === user.id;
 
                   return (
                     <article
@@ -333,11 +334,15 @@ export default function HostInvitationsPage() {
 
                       <Button
                         onClick={() => handleSendInvitation(user.id)}
-                        disabled={isSending || !selectedEventId || alreadyInvited}
+                        disabled={isSendingThisUser || !selectedEventId || alreadyInvited}
                         className="rounded-2xl"
                       >
                         <Send className="mr-2 h-4 w-4" />
-                        {alreadyInvited ? "Already invited" : isSending ? "Sending..." : "Send invite"}
+                        {alreadyInvited
+                          ? "Already invited"
+                          : isSendingThisUser
+                            ? "Sending..."
+                            : "Send invite"}
                       </Button>
                     </article>
                   );

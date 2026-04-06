@@ -22,10 +22,10 @@ function formatDate(value: string) {
 }
 
 function getInvitationTone(status: AdminInvitation["status"]) {
-  if (status === "ACCEPTED") return "bg-emerald-50 text-emerald-700";
-  if (status === "REJECTED") return "bg-red-50 text-red-700";
-  if (status === "INTERESTED") return "bg-sky-50 text-sky-700";
-  return "bg-amber-50 text-amber-700";
+  if (status === "ACCEPTED") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (status === "REJECTED") return "border-red-200 bg-red-50 text-red-800";
+  if (status === "INTERESTED") return "border-sky-200 bg-sky-50 text-sky-800";
+  return "border-amber-200 bg-amber-50 text-amber-800";
 }
 
 function MetricCard({
@@ -188,7 +188,10 @@ export default function AdminInvitationsPage() {
                         <Badge variant="outline">{invitation.event.status}</Badge>
                       </td>
                       <td className="px-6 py-5">
-                        <Badge className={getInvitationTone(invitation.status)}>
+                        <Badge
+                          variant="outline"
+                          className={`font-bold uppercase tracking-[0.16em] ${getInvitationTone(invitation.status)}`}
+                        >
                           {invitation.status}
                         </Badge>
                       </td>

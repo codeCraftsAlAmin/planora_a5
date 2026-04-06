@@ -543,6 +543,13 @@ export interface DashboardStats {
   totalInvitation: number;
   totalPendingInvitation: number;
   totalReview: number;
+  totalJoinedEvent?: number;
+  totalRegisterCount?: number;
+  totalOwnEventCount?: number;
+  totalCompletedEventCount?: number;
+  totalInvitationCount?: number;
+  totalPendingInvitationCount?: number;
+  totalReviewCount?: number;
 }
 
 export const statsService = {
