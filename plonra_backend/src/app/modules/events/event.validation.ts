@@ -1,5 +1,5 @@
 import z from "zod";
-import { EventType } from "../../../generated/prisma/enums";
+import { EventStatus, EventType } from "../../../generated/prisma/enums";
 
 const createEventValidation = z.object({
   title: z
@@ -35,6 +35,22 @@ const updateEventValidation = z.object({
   description: z.string({ message: "Description must be a string" }).optional(),
   image: z.string().url({ message: "Image must be a valid URL" }).optional(),
   fee: z.coerce.number({ message: "Fee must be a number" }).optional(),
+  status: z
+    .enum(
+      [
+        EventStatus.UPCOMING,
+        EventStatus.ONGOING,
+        EventStatus.COMPLETED,
+        EventStatus.CANCELLED,
+      ],
+      {
+        message: "Status must be UPCOMING, ONGOING, COMPLETED or CANCELLED",
+      },
+    )
+    .optional(),
+  maxMembers: z.coerce
+    .number({ message: "Max members must be a number" })
+    .optional(),
 });
 
 export const eventValidation = {

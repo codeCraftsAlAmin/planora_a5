@@ -162,6 +162,7 @@ const updateMyEventService = async (
   id: string,
   payload: IUpdateEventInterface,
 ) => {
+  console.log("payload at service ", payload);
   // find user data
   const userData = await prisma.user.findUnique({
     where: {
@@ -202,6 +203,7 @@ const updateMyEventService = async (
   }
 
   let convertEventDate = eventData.date;
+
   // convert date and time
   if (payload.date) {
     convertEventDate = convertDateTime(payload.date);
