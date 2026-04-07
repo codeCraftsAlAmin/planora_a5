@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../middleware/appError";
 import { prisma } from "../../lib/prisma";
 import {
+  EventStatus,
   InvitationStatus,
   NotificationType,
   PaymentStatus,
@@ -23,6 +24,7 @@ const sendInvitation = async (
   const event = await prisma.events.findUnique({
     where: {
       id: eventId,
+      status: EventStatus.UPCOMING,
     },
   });
 
