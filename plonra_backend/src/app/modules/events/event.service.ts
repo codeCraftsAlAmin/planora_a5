@@ -279,18 +279,27 @@ const updateMyEventService = async (
 };
 
 const getAllEventsService = async (query: IQueryParams) => {
+  const { feeType, ...restQuery } = query;
   const queryBuilders = new QueryBuilder<
     Events,
     Prisma.EventsWhereInput,
     Prisma.EventsInclude
-  >(prisma.events, query, {
+  >(prisma.events, restQuery, {
     searchableFields: eventSearchedFields,
     filterableFields: eventFilterableFields,
   });
 
+  const feeTypeFilter =
+    feeType === "free"
+      ? ({ fee: 0 } satisfies Prisma.EventsWhereInput)
+      : feeType === "paid"
+        ? ({ fee: { gt: 0 } } satisfies Prisma.EventsWhereInput)
+        : undefined;
+
   const result = await queryBuilders
     .search()
     .where({ isDeleted: false })
+    .where(feeTypeFilter || {})
     .filter()
     .include({
       organizer: true,

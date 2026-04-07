@@ -4,6 +4,7 @@ export const eventFilterableFields = [
   "type",
   "isFeatured",
   "fee",
+  "feeType",
   "organizerId",
   "status",
 ];
