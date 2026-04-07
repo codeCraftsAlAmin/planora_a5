@@ -1,13 +1,6 @@
 📅 Planora | Secure Event Management Platform
 Planora is a high-performance, full-stack event management system. It allows users to create, manage, and join events while providing organizers with robust control over participants. With a focus on security and scalability, it features JWT-protected routes, complex payment workflows, and an automated invitation system.
 
-🚀 Links & Resources
-Live Frontend: [https://planora-frontend-mu.vercel.app/]
-
-Git Repo: [https://github.com/codeCraftsAlAmin/planora_a5]
-
-Demo Video: [Insert Link (5-10 min walkthrough)]
-
 🛠️ Technical Architecture
 Frontend
 Framework: Next.js
