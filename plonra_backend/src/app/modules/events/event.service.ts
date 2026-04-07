@@ -205,11 +205,11 @@ const updateMyEventService = async (
   // convert date and time
   if (payload.date) {
     convertEventDate = convertDateTime(payload.date);
-  }
 
-  // new date must be in future
-  if (convertEventDate < new Date()) {
-    throw new AppError(status.BAD_REQUEST, "Event date must be in future");
+    // new date must be in future
+    if (convertEventDate < new Date()) {
+      throw new AppError(status.BAD_REQUEST, "Event date must be in future");
+    }
   }
 
   // delete image from cloudinary if new image is uploaded
