@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { EventCard } from "@/components/shared/event-card";
 import { MainWrapper } from "@/components/shared/main-wrapper";
 import { Input } from "@/components/ui/input";
 import { eventStatuses } from "@/lib/mock-events"; // Removed mockEvents import
-import type { EventItem, EventStatus, EventVisibility } from "@/types";
+import type {
+  EventFeeType,
+  EventItem,
+  EventStatus,
+  EventVisibility,
+} from "@/types";
 import { eventService, mapBackendEventToFrontend } from "@/lib/api-service";
 
 export default function EventsPage() {
@@ -13,6 +18,7 @@ export default function EventsPage() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [status, setStatus] = useState<EventStatus | "all">("all");
   const [visibility, setVisibility] = useState<EventVisibility | "all">("all");
+  const [feeType, setFeeType] = useState<EventFeeType | "all">("all");
   const [events, setEvents] = useState<EventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +36,18 @@ export default function EventsPage() {
   }, [query]);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedQuery, visibility, status, feeType]);
+
+  useEffect(() => {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
         const params: Record<string, string | number | boolean | undefined> = {
           searchTerm: debouncedQuery || undefined,
           type: visibility === "all" ? undefined : visibility,
+          status: status === "all" ? undefined : status,
+          feeType: feeType === "all" ? undefined : feeType,
           page: currentPage,
           limit: limit,
         };
@@ -56,15 +68,7 @@ export default function EventsPage() {
     };
 
     fetchEvents();
-  }, [debouncedQuery, visibility, currentPage, limit]);
-
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
-      const matchesStatus = status === "all" || event.status === status;
-
-      return matchesStatus;
-    });
-  }, [status, events]);
+  }, [debouncedQuery, visibility, status, feeType, currentPage, limit]);
 
   return (
     <div className="pb-16 pt-8 sm:pt-12">
@@ -86,7 +90,7 @@ export default function EventsPage() {
         </section>
 
         <section className="rounded-[32px] border border-[var(--color-border)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-[1fr_0.7fr_0.7fr]">
+          <div className="grid gap-4 lg:grid-cols-4">
             <label className="space-y-2">
               <span className="text-sm font-semibold text-[var(--color-surface-950)]">
                 Search
@@ -112,6 +116,23 @@ export default function EventsPage() {
                 <option value="all">Any type</option>
                 <option value="PUBLIC">Public</option>
                 <option value="PRIVATE">Private</option>
+              </select>
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
+                Pricing
+              </span>
+              <select
+                value={feeType}
+                onChange={(event) =>
+                  setFeeType(event.target.value as EventFeeType | "all")
+                }
+                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
+              >
+                <option value="all">Any price</option>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
               </select>
             </label>
 
@@ -157,19 +178,19 @@ export default function EventsPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
-                  Public events
+                  Explore events
                 </h2>
                 <p className="text-sm text-[var(--color-copy-muted)]">
-                  {filteredEvents.length} event
-                  {filteredEvents.length === 1 ? "" : "s"} on this page
+                  {events.length} event
+                  {events.length === 1 ? "" : "s"} on this page
                 </p>
               </div>
             </div>
 
-            {filteredEvents.length > 0 ? (
+            {events.length > 0 ? (
               <>
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {filteredEvents.map((event) => (
+                  {events.map((event) => (
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
