@@ -22,6 +22,7 @@ interface envConfig {
   CLOUDINARY_API_KEY: string;
   STRIPE_SEC_KEY: string;
   WEBHOOK_SEC_KEY: string;
+  GEMINI_API_KEY: string;
 }
 
 const envVariables = (): envConfig => {
@@ -46,6 +47,7 @@ const envVariables = (): envConfig => {
     "CLOUDINARY_API_KEY",
     "STRIPE_SEC_KEY",
     "WEBHOOK_SEC_KEY",
+    "GEMINI_API_KEY",
   ];
 
   requiredVariables.forEach((v) => {
@@ -75,6 +77,7 @@ const envVariables = (): envConfig => {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
     STRIPE_SEC_KEY: process.env.STRIPE_SEC_KEY as string,
     WEBHOOK_SEC_KEY: process.env.WEBHOOK_SEC_KEY as string,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY as string,
   };
 };
 

@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 import { EventCard } from "@/components/shared/event-card";
 import { MainWrapper } from "@/components/shared/main-wrapper";
-import { Input } from "@/components/ui/input";
-import { eventStatuses } from "@/lib/mock-events"; // Removed mockEvents import
+import { eventStatuses } from "@/lib/mock-events";
 import type {
   EventFeeType,
   EventItem,
   EventStatus,
   EventVisibility,
 } from "@/types";
-import { eventService, mapBackendEventToFrontend } from "@/lib/api-service";
+import { eventService, aiSearchService, mapBackendEventToFrontend } from "@/lib/api-service";
+import { AISearchBar } from "@/components/shared/ai-search-bar";
+import { SearchX } from "lucide-react";
 
 export default function EventsPage() {
   const [query, setQuery] = useState("");
@@ -43,16 +44,24 @@ export default function EventsPage() {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
-        const params: Record<string, string | number | boolean | undefined> = {
-          searchTerm: debouncedQuery || undefined,
-          type: visibility === "all" ? undefined : visibility,
-          status: status === "all" ? undefined : status,
-          feeType: feeType === "all" ? undefined : feeType,
-          page: currentPage,
-          limit: limit,
-        };
+        
+        let response;
+        
+        if (debouncedQuery) {
+          // Use AI Search if there's a query
+          response = await aiSearchService.search(debouncedQuery, currentPage, limit);
+        } else {
+          // Use regular fetch if no query, applying other filters
+          const params: Record<string, string | number | boolean | undefined> = {
+            type: visibility === "all" ? undefined : visibility,
+            status: status === "all" ? undefined : status,
+            feeType: feeType === "all" ? undefined : feeType,
+            page: currentPage,
+            limit: limit,
+          };
+          response = await eventService.getAllEvents(params);
+        }
 
-        const response = await eventService.getAllEvents(params);
         if (response.ok && response.data) {
           const mappedEvents = response.data.map(mapBackendEventToFrontend);
           setEvents(mappedEvents);
@@ -82,78 +91,82 @@ export default function EventsPage() {
               Discover the next event your community actually wants to attend.
             </h1>
             <p className="max-w-2xl text-base leading-8 text-[var(--color-copy)] sm:text-lg">
-              Search by title or organizer, then narrow the list by visibility,
-              category, and availability status. Each card shows real data from
-              the Planora gateway.
+              Ask our AI to find exactly what you're looking for, or use the filters below to narrow down the best community gatherings.
             </p>
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-[var(--color-border)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-4">
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Search
-              </span>
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Title or organizer..."
+        <section className="rounded-[32px] border border-[var(--color-border)] bg-white/88 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
+          <div className="flex flex-col gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <div className="h-2 w-2 rounded-full bg-[var(--color-brand-500)] animate-pulse" />
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-surface-950)]">
+                  AI Event Discovery
+                </h3>
+              </div>
+              <AISearchBar 
+                onSearch={(val) => setQuery(val)} 
+                initialValue={query} 
               />
-            </label>
+            </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Visibility
-              </span>
-              <select
-                value={visibility}
-                onChange={(event) =>
-                  setVisibility(event.target.value as EventVisibility | "all")
-                }
-                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
-              >
-                <option value="all">Any type</option>
-                <option value="PUBLIC">Public</option>
-                <option value="PRIVATE">Private</option>
-              </select>
-            </label>
+            <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent opacity-50" />
 
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Pricing
-              </span>
-              <select
-                value={feeType}
-                onChange={(event) =>
-                  setFeeType(event.target.value as EventFeeType | "all")
-                }
-                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
-              >
-                <option value="all">Any price</option>
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
-            </label>
+            <div className="grid gap-6 sm:grid-cols-3">
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-copy-muted)]">
+                  Visibility
+                </span>
+                <select
+                  value={visibility}
+                  onChange={(event) =>
+                    setVisibility(event.target.value as EventVisibility | "all")
+                  }
+                  className="h-12 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-sm outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-50)]"
+                >
+                  <option value="all">Any type</option>
+                  <option value="PUBLIC">Public</option>
+                  <option value="PRIVATE">Private</option>
+                </select>
+              </label>
 
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[var(--color-surface-950)]">
-                Status
-              </span>
-              <select
-                value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as EventStatus | "all")
-                }
-                className="h-11 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-100)]"
-              >
-                {eventStatuses.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-copy-muted)]">
+                  Pricing
+                </span>
+                <select
+                  value={feeType}
+                  onChange={(event) =>
+                    setFeeType(event.target.value as EventFeeType | "all")
+                  }
+                  className="h-12 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-sm outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-50)]"
+                >
+                  <option value="all">Any price</option>
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-copy-muted)]">
+                  Status
+                </span>
+                <select
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(event.target.value as EventStatus | "all")
+                  }
+                  className="h-12 w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 text-sm text-[var(--color-copy)] shadow-sm outline-none transition focus:border-[var(--color-brand-500)] focus:ring-4 focus:ring-[var(--color-brand-50)]"
+                >
+                  {eventStatuses.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         </section>
 
@@ -174,42 +187,42 @@ export default function EventsPage() {
             </p>
           </div>
         ) : (
-          <section className="space-y-4">
+          <section className="space-y-6">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-serif text-3xl text-[var(--color-surface-950)]">
-                  Explore events
+                  {debouncedQuery ? "Search Results" : "Explore events"}
                 </h2>
                 <p className="text-sm text-[var(--color-copy-muted)]">
-                  {events.length} event
-                  {events.length === 1 ? "" : "s"} on this page
+                  Found {events.length} event
+                  {events.length === 1 ? "" : "s"} for your criteria
                 </p>
               </div>
             </div>
 
             {events.length > 0 ? (
               <>
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
                   {events.map((event) => (
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="mt-8 flex items-center justify-center gap-4">
+                <div className="mt-12 flex items-center justify-center gap-6">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(1, prev - 1))
                     }
                     disabled={currentPage === 1}
-                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-11 items-center rounded-xl border border-[var(--color-border)] bg-white px-6 text-sm font-semibold text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                   >
                     Previous
                   </button>
 
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-[var(--color-copy)]">
-                      Page <span className="font-semibold">{currentPage}</span>{" "}
+                      Page <span className="text-[var(--color-brand-600)] font-bold">{currentPage}</span>{" "}
                       of <span className="font-semibold">{totalPages}</span>
                     </span>
                   </div>
@@ -219,16 +232,19 @@ export default function EventsPage() {
                       setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                     }
                     disabled={currentPage === totalPages}
-                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-11 items-center rounded-xl border border-[var(--color-border)] bg-white px-6 text-sm font-semibold text-[var(--color-copy)] transition hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                   >
                     Next
                   </button>
                 </div>
               </>
             ) : (
-              <div className="rounded-[28px] border border-dashed border-[var(--color-border-strong)] bg-white/70 px-6 py-12 text-center">
+              <div className="rounded-[40px] border-2 border-dashed border-[var(--color-border)] bg-white/40 px-6 py-20 text-center backdrop-blur-sm">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-brand-50)] text-[var(--color-brand-600)]">
+                  <SearchX className="h-8 w-8" />
+                </div>
                 <h3 className="font-serif text-2xl text-[var(--color-surface-950)]">
-                  No events match that search yet
+                  No events found
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-copy-muted)]">
                   Try a different keyword or reset the category and status

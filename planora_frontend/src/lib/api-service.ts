@@ -567,3 +567,14 @@ export interface DashboardStats {
 export const statsService = {
   getDashboardStats: () => apiFetch<DashboardStats>("/stats/"),
 };
+
+export const aiSearchService = {
+  search: (query: string, page: number = 1, limit: number = 10) =>
+    apiFetch<BackendEvent[]>(
+      `/ai/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+    ),
+
+  getSuggestions: (query: string) =>
+    apiFetch<string[]>(`/ai/suggestion?query=${encodeURIComponent(query)}`),
+};
+

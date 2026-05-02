@@ -18,6 +18,7 @@ import { invitationRouter } from "./app/modules/invitations/invitation.route";
 import { invitationService } from "./app/modules/invitations/invitation.service";
 import { reviewsRouter } from "./app/modules/reviews/reviews.route";
 import { statsRouter } from "./app/modules/stats/state.route";
+import { searchRouter } from "./app/modules/ai-search/search.route";
 
 const app: Application = express();
 
@@ -92,6 +93,9 @@ app.use("/api/v1/users", userRouter);
 
 // admin router
 app.use("/api/v1/admin", adminRouter);
+
+// ai search router
+app.use("/api/v1/ai", searchRouter);
 
 // base route
 app.get("/", (req: Request, res: Response) => {

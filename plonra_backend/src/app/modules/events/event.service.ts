@@ -162,7 +162,7 @@ const updateMyEventService = async (
   id: string,
   payload: IUpdateEventInterface,
 ) => {
-  console.log("payload at service ", payload);
+
   // find user data
   const userData = await prisma.user.findUnique({
     where: {
