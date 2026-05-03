@@ -7,7 +7,7 @@ export default function AboutPage() {
       <MainWrapper className="space-y-8">
         <section className="rounded-[36px] border border-[var(--color-border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,248,238,0.88))] p-8 shadow-[0_30px_70px_rgba(15,23,42,0.08)] sm:p-10 lg:p-14">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-brand-700)]">
-            About Planora
+            About Planoraa
           </p>
           <div className="mt-5 max-w-3xl space-y-4">
             <h1 className="font-serif text-5xl leading-none tracking-tight text-[var(--color-surface-950)] sm:text-6xl">
