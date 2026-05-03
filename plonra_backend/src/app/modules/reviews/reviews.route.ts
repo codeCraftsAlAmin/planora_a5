@@ -15,7 +15,7 @@ router.post(
 // get all reviews
 router.get("/", reviewsController.getAllReviews);
 
-// update review
+// update reviews
 router.put(
   "/update/:id",
   checkAuth(Role.USER, Role.HOST, Role.ADMIN),
